@@ -1,0 +1,3 @@
+[submodule "ICICLE_Foodshed_Parser"]
+	path = source/ICICLE_Foodshed_Parser
+	url = https://github.com/ICICLE-ai/ICICLE_Foodshed_Parser
