@@ -1,0 +1,15 @@
+[submodule "source/harp"]
+	path = source/harp
+	url = https://github.com/ICICLE-ai/harp
+[submodule "source/iSpLib"]
+	path = source/iSpLib
+	url = https://github.com/ICICLE-ai/iSpLib
+[submodule "source/tapis-project"]
+	path = source/tapis-project
+	url = https://github.com/tapis-project/documentation
+[submodule "source/event-engine"]
+	path = source/event-engine
+	url = https://github.com/tapis-project/event-engine
+[submodule "source/hello_icicle_auth_clients"]
+	path = source/hello_icicle_auth_clients
+	url = https://github.com/ICICLE-ai/hello_icicle_auth_clients
