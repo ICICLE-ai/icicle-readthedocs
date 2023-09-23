@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Event Engine &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=cb25574f" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Hello ICICLE Authentication Clients" href="../hello_icicle_auth_clients/README.html" />
+    <link rel="prev" title="Tapis Documentation" href="../tapis-project/README.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="event-engine">
+<h1>Event Engine<a class="headerlink" href="#event-engine" title="Link to this heading">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">event-engine</span></code> project provides a framework for writing event-based applications that utilize a plugin architecture. Applications built with <code class="docutils literal notranslate"><span class="pre">event-engine</span></code> are written in Rust but can include plugins written in multiple languages.</p>
+<p>Events correspond to statically typed messages that can be transmitted over a socket and are the basic
+mechanism of communication between plugins of the application. Each application defines its own event types,
+including the mechanisms for serializing and deserializing an event’s message to/from bytes. No assumption
+is made about the serialization format used for events, and different event types can utilize
+different formats.</p>
+<p>Plugins are independent components of an application that create and consume events. Each plugin defines
+the event types it is interested in, and the core <code class="docutils literal notranslate"><span class="pre">event-engine</span></code> proxies event messages to the application’s
+plugins using a publish-subscribe pattern.</p>
+<p>Plugins can be “internal” or “external”. Internal plugins run as child threads within the main (Rust) application process and are necessarily written in Rust. External plugins run as separate OS processes and
+can be written in any language.</p>
+<p>All event message communication happens via <code class="docutils literal notranslate"><span class="pre">zmq</span></code> sockets which <code class="docutils literal notranslate"><span class="pre">event-engine</span></code> manages. Internal plugins
+send and receive event messages using <code class="docutils literal notranslate"><span class="pre">inproc</span></code> sockets while external plugins use TCP sockets.</p>
+<p><img alt="Depiction of an example application" src="../_images/event_engine_design.png" /></p>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
+<p>The main steps to building an application using <code class="docutils literal notranslate"><span class="pre">event-engine</span></code> are as follows:</p>
+<ol class="arabic simple">
+<li><p>Define the <code class="docutils literal notranslate"><span class="pre">EventType</span></code>s and <code class="docutils literal notranslate"><span class="pre">Event</span></code>s for the application. The <code class="docutils literal notranslate"><span class="pre">events.rs</span></code> module includes two traits,
+<code class="docutils literal notranslate"><span class="pre">EventType</span></code> and <code class="docutils literal notranslate"><span class="pre">Event</span></code>, to be implemented.</p></li>
+<li><p>Define the plugins for the application. These are the independent components that will create and consume
+events. The <code class="docutils literal notranslate"><span class="pre">plugins.rs</span></code> module includes the <code class="docutils literal notranslate"><span class="pre">Plugin</span></code> and <code class="docutils literal notranslate"><span class="pre">ExternalPlugin</span></code> traits to be implemented.</p></li>
+<li><p>Create an <code class="docutils literal notranslate"><span class="pre">event_engine::App</span></code> object and configure it with the plugins for the application. For example,</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>     <span class="n">use</span> <span class="n">event_engine</span><span class="p">::</span><span class="n">App</span><span class="p">;</span>
+     <span class="o">//</span> <span class="n">define</span> <span class="n">events</span> <span class="ow">and</span> <span class="n">plugins</span>
+
+     <span class="o">//</span> <span class="n">create</span> <span class="n">the</span> <span class="n">App</span> <span class="nb">object</span><span class="p">,</span> <span class="n">register</span> <span class="n">the</span> <span class="n">plugins</span> <span class="ow">and</span> <span class="n">run</span>
+     <span class="n">fn</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+         <span class="o">//</span> <span class="n">two</span> <span class="n">Rust</span> <span class="n">plugins</span>
+         <span class="n">let</span> <span class="n">msg_producer</span> <span class="o">=</span> <span class="n">MsgProducerPlugin</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+         <span class="n">let</span> <span class="n">counter</span> <span class="o">=</span> <span class="n">CounterPlugin</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+         <span class="o">//</span> <span class="n">an</span> <span class="n">external</span> <span class="n">plugin</span> <span class="n">written</span> <span class="ow">in</span> <span class="n">python</span>
+         <span class="n">let</span> <span class="n">pyplugin</span> <span class="o">=</span> <span class="n">PyPlugin</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+     
+         <span class="o">//</span> <span class="n">main</span> <span class="n">application</span> <span class="nb">object</span>
+         <span class="n">let</span> <span class="n">app</span><span class="p">:</span> <span class="n">App</span> <span class="o">=</span> <span class="n">App</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">5559</span><span class="p">,</span> <span class="mi">5560</span><span class="p">);</span>
+         <span class="n">app</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">Arc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">msg_producer</span><span class="p">)))</span>
+             <span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">Arc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">counter</span><span class="p">)))</span>
+             <span class="o">.</span><span class="n">register_external_plugin</span><span class="p">(</span><span class="n">Arc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">pyplugin</span><span class="p">)))</span>
+             <span class="o">.</span><span class="n">run</span><span class="p">()</span>
+             <span class="o">.</span><span class="n">unwrap</span><span class="p">();</span>
+         <span class="p">()</span>
+     <span class="p">}</span>
+</pre></div>
+</div>
+<p>In the case of external plugins, a small Python module, <code class="docutils literal notranslate"><span class="pre">events.py</span></code>, included within the <code class="docutils literal notranslate"><span class="pre">pyevents</span></code>
+directory of this repository, has been written to simplify the process of writing Python plugins.
+There is also a Docker image, <code class="docutils literal notranslate"><span class="pre">tapis/pyevents</span></code>, which can be used to build a standalone container
+with a Python plugin.</p>
+<section id="external-plugins">
+<h3>External Plugins<a class="headerlink" href="#external-plugins" title="Link to this heading">¶</a></h3>
+<p>There are two possible approaches to implementing external plugins in an application built with
+<code class="docutils literal notranslate"><span class="pre">event-engine</span></code>. The first approach utilizes the TCP ports that the main (Rust) application is configured
+with to directly receive all event messages and to publish messages. With this approach, the application
+need not register the external plugins at all – they are separate processes that read and write from the
+TCP socket without the engine’s direct knowledge. However, in this case, the application must
+take care of synchronizing the external plugins with the rest of the application. Otherwise, it is possible
+that external plugins will miss initial events sent by other plugins that start up more quickly. Additionally,
+the plugin itself must take care of filtering the events it is interested in – all events are published
+to the application’s TCP port, and no subscription filtering is done for the external plugin.</p>
+<p>The other approach is to register the external plugins with the engine. The benefit to this approach is that
+the engine will take care of synchronization and event filtering. The way this works is as follows:
+when the external plugin is registered with the engine, its subscriptions as well as a single TCP port
+are provided as part of the <code class="docutils literal notranslate"><span class="pre">ExternalPlugin</span></code> trait. The engine starts a thread for the external plugin,
+just as it would an internal plugin, and it configures an inproc zmq socket for it that will only
+receive the events it is subscribed to. The actual process comprising the external plugin then interacts
+with this thread using the TCP port. It uses a <code class="docutils literal notranslate"><span class="pre">REQ-REP</span></code> zmq socket to send commands to do the following
+actions:</p>
+<ol class="arabic simple">
+<li><p>Receive the next message: Send a string message with contents <code class="docutils literal notranslate"><span class="pre">plugin_command:</span> <span class="pre">next_msg</span></code></p></li>
+<li><p>Publish a message: Send any raw binary data payload that does not begin with a special plugin command
+string.</p></li>
+<li><p>Shut down the plugin: Send a string message with contents: <code class="docutils literal notranslate"><span class="pre">plugin_command:</span> <span class="pre">quit</span></code></p></li>
+</ol>
+<p>When 1) is encountered by the external plugin thread running within the main program, the thread responds
+with the (binary) payload of the next message in its queue. Note that it does this by making an internal call
+to <code class="docutils literal notranslate"><span class="pre">recv_bytes</span></code> on its subscriptions socket, which means that if there are no new messages, the call will
+block.</p>
+<p>The use of 3) allows the main engine of the application to shut down the associated thread once the plugin’s
+execution has completed.</p>
+</section>
+<section id="external-python-plugins">
+<h3>External Python Plugins<a class="headerlink" href="#external-python-plugins" title="Link to this heading">¶</a></h3>
+<p>Note that for external plugins written in Python, a small library, <code class="docutils literal notranslate"><span class="pre">events.py</span></code>, has been written to help
+accomplish 1), 2) and 3) from the previous section. The associated Docker image, <code class="docutils literal notranslate"><span class="pre">tapis/pyevents</span></code> can be
+used as a base image for building plugins in Python, and it includes zmq as well as <code class="docutils literal notranslate"><span class="pre">events.py</span></code>.</p>
+</section>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>
+<p>This repository includes a complete example application consisting of two (internal) Rust plugins and
+one external Python plugin. The application is packaged as two Docker containers – the main Rust
+application, with the two Rust plugins, runs in the first container and the Python plugin runs in the second
+container. See the <code class="docutils literal notranslate"><span class="pre">example</span></code> directory for more details.</p>
+</section>
+<section id="design-and-architecture">
+<h2>Design and Architecture<a class="headerlink" href="#design-and-architecture" title="Link to this heading">¶</a></h2>
+<p>As mentioned in the introduction, the <code class="docutils literal notranslate"><span class="pre">even-engine</span></code> framework is designed around two primary notions:</p>
+<ol class="arabic simple">
+<li><p>events of interest in the application will be described as typed messages that can be transmitted over a socket; and</p></li>
+<li><p>independent application components, referred to as <em>plugins</em>, will register events they are interested in
+receiving.</p></li>
+</ol>
+<p>The subsequent sections discuss the design and architecture of <code class="docutils literal notranslate"><span class="pre">event-engine</span></code> in more detail.</p>
+<section id="zmq-sockets-and-publish-subscribe">
+<h3>ZMQ Sockets and Publish-Subscribe<a class="headerlink" href="#zmq-sockets-and-publish-subscribe" title="Link to this heading">¶</a></h3>
+<p>ZMQ sockets provide a foundational building block for <code class="docutils literal notranslate"><span class="pre">event-engine</span></code>. The ZMQ socket exposes a single API supporting
+multiple transports, including in-process, inter-process and TCP. It also enables a number of advanced messaging
+patterns, such as request-reply and pub-sub, while simultaneously handling issues such as auto-reconnect.</p>
+<p>In ZMQ, all sockets have a type, and socket types tend to work together in pairs. <code class="docutils literal notranslate"><span class="pre">event-engine</span></code> uses two socket
+type pairs to enable its functionality: <code class="docutils literal notranslate"><span class="pre">PUB-SUB</span></code> sockets are used to allow plugins to publish events and receive
+events generated by other plugins, and <code class="docutils literal notranslate"><span class="pre">REP-REQ</span></code> sockets are used to sync all plugins at the start of an application,
+to ensure that no plugin misses initial messages that are sent.</p>
+<p>The engine creates socket objects for itself and for each of the plugins. The socket types mirror each other:</p>
+<ul class="simple">
+<li><p>The engine creates an “outgoing” socket bound to an <code class="docutils literal notranslate"><span class="pre">inproc</span></code> URL and TCP port of type <code class="docutils literal notranslate"><span class="pre">PUB</span></code> for itself, and it
+creates a corresponding <code class="docutils literal notranslate"><span class="pre">SUB</span></code> socket bound to the same endpoints for each plugin. This is the socket on which plugins
+receive new event messages.</p></li>
+<li><p>Similarly, the engine creates an “incoming” socket bound to an <code class="docutils literal notranslate"><span class="pre">inproc</span></code> URL and TCP port of type <code class="docutils literal notranslate"><span class="pre">SUB</span></code> for itself, and
+it creates a corresponding <code class="docutils literal notranslate"><span class="pre">PUB</span></code> socket bound to the same endpoints for each plugin. This is the socket on which plugins
+publish new event messages.</p></li>
+<li><p>It creates a “sync” socket of type <code class="docutils literal notranslate"><span class="pre">REP</span></code> that the engine uses and of type <code class="docutils literal notranslate"><span class="pre">REQ</span></code> that each plugin uses for
+synchronization.</p></li>
+</ul>
+<p>Synchronization works in two steps: first, each plugin is started with a <code class="docutils literal notranslate"><span class="pre">REQ</span></code> socket, and it sends a “ready” message on
+this socket once it is started. The plugin then blocks, waiting for a reply from the engine. The engine collects a
+“ready” message from each registered plugin before sending an “ok” reply (on its corresponding <code class="docutils literal notranslate"><span class="pre">REP</span></code> sockets) to each
+plugin. Once a plugin thread has received an “ok” reply, its start function is executed.</p>
+</section>
+<section id="interfaces">
+<h3>Interfaces<a class="headerlink" href="#interfaces" title="Link to this heading">¶</a></h3>
+</section>
+<section id="concurrency">
+<h3>Concurrency<a class="headerlink" href="#concurrency" title="Link to this heading">¶</a></h3>
+</section>
+</section>
+<section id="developing-event-engine">
+<h2>Developing <code class="docutils literal notranslate"><span class="pre">event-engine</span></code><a class="headerlink" href="#developing-event-engine" title="Link to this heading">¶</a></h2>
+<p><em>Work in progress</em></p>
+</section>
+</section>
+<section id="acknowledgement">
+<h1>Acknowledgement<a class="headerlink" href="#acknowledgement" title="Link to this heading">¶</a></h1>
+<p>This work has been funded by grants from the National Science Foundation, including the ICICLE AI Institute (OAC 2112606) and Tapis (OAC 1931439).</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../tapis-project/README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../tapis-project/README.html" title="previous chapter">Tapis Documentation</a></li>
+      <li>Next: <a href="../hello_icicle_auth_clients/README.html" title="next chapter">Hello ICICLE Authentication Clients</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/event-engine/README.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

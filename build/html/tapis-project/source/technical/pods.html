@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Pods &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="pods">
+<span id="id1"></span><h1>Pods<a class="headerlink" href="#pods" title="Link to this heading">¶</a></h1>
+<hr class="docutils" />
+<section id="introduction-to-the-pods-service">
+<h2>Introduction to the Pods Service<a class="headerlink" href="#introduction-to-the-pods-service" title="Link to this heading">¶</a></h2>
+<section id="what-is-the-pods-service">
+<h3>What is the Pods Service<a class="headerlink" href="#what-is-the-pods-service" title="Link to this heading">¶</a></h3>
+<p>The Pods Service is a web service and distributed computing platform providing pods-as-a-service (PaaS). The service
+implements a message broker and processor model that requests pods, alongside a health module to poll for pod
+data, including logs, status, and health. The primary use of this service is to have quick to deploy long-lived
+services based on Docker images that are exposed via HTTP or TCP endpoints listed by the API.</p>
+<dl class="simple">
+<dt>The Pods service provides functionality for two types of pod solutions:</dt><dd><ul class="simple">
+<li><p><em>Templated Pods</em> for run-as-is popular images. Neo4J is one example, the template manages TCP ports, user creation, and permissions.</p></li>
+<li><p><em>Custom Pods</em> for arbitrary docker images with less functionality. In this case we will expose port 5000 and do nothing else.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="using-the-pods-service">
+<h3>Using the Pods Service<a class="headerlink" href="#using-the-pods-service" title="Link to this heading">¶</a></h3>
+<p>Please create issues on our <a class="reference external" href="https://github.com/tapis-project/pods_service">github repo</a> and report problems to Christian R. Garcia.
+The service is available to researchers and students. To learn more about the the system, including getting access, follow the
+instructions in <span class="xref std std-doc">/getting-started/index</span>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h2>
+<p>This Getting Started guide will walk you through the initial steps of setting up the necessary accounts and installing
+the required software before moving to the Pods Quickstart, where you will create your first Pods service pod. If
+you are already using Docker Hub and the TACC TAPIS APIs, feel free to jump right to the <a class="reference internal" href="#pods-quickstart">Pods Quickstart</a> or check
+out the <a class="reference external" href="https://tapis-project.github.io/live-docs/?service=Pods">Pods Live Docs</a>.</p>
+<section id="account-creation-and-software-installation">
+<h3>Account Creation and Software Installation<a class="headerlink" href="#account-creation-and-software-installation" title="Link to this heading">¶</a></h3>
+<section id="create-a-tacc-account">
+<h4>Create a TACC account<a class="headerlink" href="#create-a-tacc-account" title="Link to this heading">¶</a></h4>
+<p>The main instance of the Pods platform is hosted at the Texas Advanced Computing Center (<a class="reference external" href="https://tacc.utexas.edu">TACC</a>).
+TACC designs and deploys some of the world’s most powerful advanced computing technologies and innovative software
+solutions to enable researchers to answer complex questions. To use the TACC-hosted Pods service, please
+create a <a class="reference external" href="https://portal.tacc.utexas.edu/account-request">TACC account</a>.</p>
+</section>
+<section id="create-a-docker-account">
+<h4>Create a Docker account<a class="headerlink" href="#create-a-docker-account" title="Link to this heading">¶</a></h4>
+<p><a class="reference external" href="https://www.docker.com/">Docker</a> is an open-source container runtime providing operating-system-level
+virtualization. The Pods service pulls images for its pods from the public Docker Hub. To register pods
+you will need to publish images on Docker Hub, which requires a <a class="reference external" href="https://hub.docker.com/">Docker account</a> .</p>
+</section>
+<section id="install-the-tapis-python-sdk">
+<h4>Install the Tapis Python SDK<a class="headerlink" href="#install-the-tapis-python-sdk" title="Link to this heading">¶</a></h4>
+<p>To interact with the TACC-hosted Abaco platform in Python, we will leverage the Tapis Python SDK, tapipy. To install it,
+simply run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip3<span class="w"> </span>install<span class="w"> </span>tapipy
+</pre></div>
+</div>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p><code class="docutils literal notranslate"><span class="pre">tapipy</span></code> works with Python 3.</p>
+</div>
+</section>
+</section>
+<section id="working-with-tacc-oauth">
+<h3>Working with TACC OAuth<a class="headerlink" href="#working-with-tacc-oauth" title="Link to this heading">¶</a></h3>
+<p>Authentication and authorization to the Tapis APIs uses <a class="reference external" href="https://oauth.net/2/">OAuth2</a>, a widely-adopted web standard.
+Our implementation of OAuth2 is designed to give you the flexibility you need to script and automate use of Tapis
+while keeping your access credentials and digital assets secure. This is covered in great detail in our
+Tenancy and Authentication section, but some key concepts will be highlighted here, interleaved with Python code.</p>
+<section id="create-an-tapis-client-object">
+<h4>Create an Tapis Client Object<a class="headerlink" href="#create-an-tapis-client-object" title="Link to this heading">¶</a></h4>
+<p>The first step in using the Tapis Python SDK, tapipy, is to create a Tapis Client object. First, import
+the <code class="docutils literal notranslate"><span class="pre">Tapis</span></code> class and create python object called <code class="docutils literal notranslate"><span class="pre">t</span></code> that points to the Tapis server using your TACC
+username and password. Do so by typing the following in a Python shell:</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Support for Pods service in Tapipy was added in version 1.2.3.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import the Tapis object</span>
+<span class="kn">from</span> <span class="nn">tapipy.tapis</span> <span class="kn">import</span> <span class="n">Tapis</span>
+
+<span class="c1"># Log into you the Tapis service by providing user/pass and url.</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">Tapis</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="s1">&#39;https://tacc.tapis.io&#39;</span><span class="p">,</span>
+          <span class="n">username</span><span class="o">=</span><span class="s1">&#39;your username&#39;</span><span class="p">,</span>
+          <span class="n">password</span><span class="o">=</span><span class="s1">&#39;your password&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="generate-a-token">
+<h4>Generate a Token<a class="headerlink" href="#generate-a-token" title="Link to this heading">¶</a></h4>
+<p>With the <code class="docutils literal notranslate"><span class="pre">t</span></code> object instantiated, we can exchange our credentials for an access token. In Tapis, you
+never send your username and password directly to the services; instead, you pass an access token which
+is cryptographically signed by the OAuth server and includes information about your identity. The Tapis
+services use this token to determine who you are and what you can do.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get tokens that will be used for authenticated function calls</span>
+<span class="n">t</span><span class="o">.</span><span class="n">get_tokens</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">access_token</span><span class="o">.</span><span class="n">access_token</span><span class="p">)</span>
+
+<span class="n">Out</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Note that the tapipy <code class="docutils literal notranslate"><span class="pre">t</span></code> object will store and pass your access token for you, so you don’t have to manually provide
+the token when using the tapipy operations. You are now ready to check your access to the Tapis APIs. It will
+expire though, after 4 hours, at which time you will need to generate a new token. If you are interested, you
+can create an OAuth client (a one-time setup step, like creating a TACC account) that can be used to generate
+access and refresh tokens. For simplicity, we are skipping that but if you are interested, check out the Tenancy and
+Authentication section.</p>
+</section>
+<section id="check-access-to-the-tapis-apis">
+<h4>Check Access to the Tapis APIs<a class="headerlink" href="#check-access-to-the-tapis-apis" title="Link to this heading">¶</a></h4>
+<p>The tapipy <code class="docutils literal notranslate"><span class="pre">t</span></code> object should now be configured to talk to all Tapis APIs on your behalf. We can check that the client is
+configured properly by making any API call. For example, we can use the authenticator service to retrieve the full
+TACC profile of our user. To do so, use the <code class="docutils literal notranslate"><span class="pre">get_profile()</span></code> function associated with the <code class="docutils literal notranslate"><span class="pre">authenticator</span></code> object on
+the <code class="docutils literal notranslate"><span class="pre">t</span></code> object, passing the username of the profile to retrieve, as follows.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">authenticator</span><span class="o">.</span><span class="n">get_profile</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s1">&#39;apitest&#39;</span><span class="p">)</span>
+
+<span class="n">Out</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+<span class="n">create_time</span><span class="p">:</span> <span class="kc">None</span>
+<span class="n">dn</span><span class="p">:</span> <span class="n">cn</span><span class="o">=</span><span class="n">apitest</span><span class="p">,</span><span class="n">ou</span><span class="o">=</span><span class="n">People</span><span class="p">,</span><span class="n">dc</span><span class="o">=</span><span class="n">tacc</span><span class="p">,</span><span class="n">dc</span><span class="o">=</span><span class="n">utexas</span><span class="p">,</span><span class="n">dc</span><span class="o">=</span><span class="n">edu</span>
+<span class="n">email</span><span class="p">:</span> <span class="n">aci</span><span class="o">-</span><span class="n">cic</span><span class="nd">@tacc</span><span class="o">.</span><span class="n">utexas</span><span class="o">.</span><span class="n">edu</span>
+<span class="n">username</span><span class="p">:</span> <span class="n">apitest</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="pods-quickstart">
+<h2>Pods Quickstart<a class="headerlink" href="#pods-quickstart" title="Link to this heading">¶</a></h2>
+<p>In this Quickstart, we will create an Pods service pod from a basic Python function. Then we will get pod credentials and logs.</p>
+<section id="registering-a-templated-pod">
+<h3>Registering a templated Pod<a class="headerlink" href="#registering-a-templated-pod" title="Link to this heading">¶</a></h3>
+<p>To get started we’re going to create a templated Pod. To do this, we will use the <code class="docutils literal notranslate"><span class="pre">Tapis</span></code> client object we created above
+(see <a class="reference internal" href="#working-with-tacc-oauth">Working with TACC OAuth</a>).</p>
+<p>To register an pod using the tapipy library, we use the <code class="docutils literal notranslate"><span class="pre">pods.create_pod()</span></code> method and pass the arguments describing
+the pod we want to register through the function parameters. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">pods</span><span class="o">.</span><span class="n">create_pod</span><span class="p">(</span><span class="n">pod_id</span><span class="o">=</span><span class="s1">&#39;docpod&#39;</span><span class="p">,</span> <span class="n">pod_template</span><span class="o">=</span><span class="s1">&#39;neo4j&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;My example pod!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As you can see, we’re using pod_template equal to <cite>neo4j</cite>, that is one of our templated pods.
+You should see a response like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>creation_ts:<span class="w"> </span>None
+data_attached:<span class="w"> </span><span class="o">[]</span>
+data_requests:<span class="w"> </span><span class="o">[]</span>
+description:<span class="w"> </span>My<span class="w"> </span>example<span class="w"> </span>pod!
+environment_variables:
+
+pod_id:<span class="w"> </span><span class="nb">test</span>
+pod_template:<span class="w"> </span>neo4j
+roles_inherited:<span class="w"> </span><span class="o">[]</span>
+roles_required:<span class="w"> </span><span class="o">[]</span>
+status:<span class="w"> </span>REQUESTED
+status_container:
+
+status_requested:<span class="w"> </span>ON
+update_ts:<span class="w"> </span>None
+url:<span class="w"> </span>docpod.pods.tacc.develop.tapis.io
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>The <cite>pod_id</cite> given will be the id used by you to access the pod at all times. It must be lowercase and alphanumeric.
+It also must be unique within the tenant.</p></li>
+<li><p>Pods returned a status of <code class="docutils literal notranslate"><span class="pre">REQUESTED</span></code> for the pod; behind the scenes, the Pods service has sent a message requesting
+the pod described to our backend <cite>spawner</cite> infrastructure. The pod’s image must be pulled, a pod service must be created
+(for networking), and the networking changes must propagate to the Pod’s proxy before the Pod is ready for use.</p></li>
+<li><p>When the pod itself has began running, the status will change to <code class="docutils literal notranslate"><span class="pre">RUNNING</span></code>. Networking must change before use though
+(1-2 minutes). Additionally, a <code class="docutils literal notranslate"><span class="pre">RUNNING</span></code> pod only means the pod itself has started, check pod logs to see what your
+container is actually doing (if it writes to stdout, else wait).</p></li>
+</ul>
+<p>At any point we can check the details of our pods, including its status, with the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">pods</span><span class="o">.</span><span class="n">get_pod</span><span class="p">(</span><span class="n">pod_id</span><span class="o">=</span><span class="s1">&#39;docpod&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The response format is identical to that returned from the <code class="docutils literal notranslate"><span class="pre">t.pods.create_pod()</span></code> method.</p>
+</section>
+<section id="accessing-a-pod">
+<h3>Accessing a Pod<a class="headerlink" href="#accessing-a-pod" title="Link to this heading">¶</a></h3>
+<p>Once your pod is in the <code class="docutils literal notranslate"><span class="pre">RUNNING</span></code> state, and after the networking changes proliferate, you should have access to your
+pod via the internet. In the case of templated pods, networking might be through a TCP or HTTP connection. In the case
+of custom docker image pods, networking always works by exposing port 5000 through HTTP.</p>
+<p>To access your pod through the network though we can use the url provided in the pod’s description when creating the pod
+or when getting the pod description as we did above. In the pod response object, the <code class="docutils literal notranslate"><span class="pre">url</span></code> attribute gives you the
+url your service is being hosted on.</p>
+<p><strong>Place cool example here of something we can call</strong></p>
+</section>
+<section id="retrieving-the-logs">
+<h3>Retrieving the Logs<a class="headerlink" href="#retrieving-the-logs" title="Link to this heading">¶</a></h3>
+<p>The Pods service collects the latest 10 MB of logs (subject to change) from the pod when running and makes them available
+via the <code class="docutils literal notranslate"><span class="pre">logs</span></code> endpoint. Let’s retrieve the logs from the pod we just made. We use the <code class="docutils literal notranslate"><span class="pre">get_pod_logs()</span></code> method,
+passing in <code class="docutils literal notranslate"><span class="pre">pod_id</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">pods</span><span class="o">.</span><span class="n">get_pod_logs</span><span class="p">(</span><span class="n">pod_id</span><span class="o">=</span><span class="s1">&#39;docpod&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The response should be similar to the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logs</span><span class="p">:</span>
+<span class="n">Fetching</span> <span class="n">versions</span><span class="o">.</span><span class="n">json</span> <span class="k">for</span> <span class="n">Plugin</span> <span class="s1">&#39;apoc&#39;</span> <span class="kn">from</span> <span class="nn">https</span><span class="p">:</span><span class="o">//</span><span class="n">neo4j</span><span class="o">-</span><span class="n">contrib</span><span class="o">.</span><span class="n">github</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">neo4j</span><span class="o">-</span><span class="n">apoc</span><span class="o">-</span><span class="n">procedures</span><span class="o">/</span><span class="n">versions</span><span class="o">.</span><span class="n">json</span>
+<span class="n">Installing</span> <span class="n">Plugin</span> <span class="s1">&#39;apoc&#39;</span> <span class="kn">from</span> <span class="nn">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">neo4j</span><span class="o">-</span><span class="n">contrib</span><span class="o">/</span><span class="n">neo4j</span><span class="o">-</span><span class="n">apoc</span><span class="o">-</span><span class="n">procedures</span><span class="o">/</span><span class="n">releases</span><span class="o">/</span><span class="n">download</span><span class="o">/</span><span class="mf">4.4.0.6</span><span class="o">/</span><span class="n">apoc</span><span class="o">-</span><span class="mf">4.4.0.6</span><span class="o">-</span><span class="nb">all</span><span class="o">.</span><span class="n">jar</span> <span class="n">to</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">neo4j</span><span class="o">/</span><span class="n">plugins</span><span class="o">/</span><span class="n">apoc</span><span class="o">.</span><span class="n">jar</span>
+<span class="n">Applying</span> <span class="n">default</span> <span class="n">values</span> <span class="k">for</span> <span class="n">plugin</span> <span class="n">apoc</span> <span class="n">to</span> <span class="n">neo4j</span><span class="o">.</span><span class="n">conf</span>
+<span class="n">Fetching</span> <span class="n">versions</span><span class="o">.</span><span class="n">json</span> <span class="k">for</span> <span class="n">Plugin</span> <span class="s1">&#39;n10s&#39;</span> <span class="kn">from</span> <span class="nn">https</span><span class="p">:</span><span class="o">//</span><span class="n">neo4j</span><span class="o">-</span><span class="n">labs</span><span class="o">.</span><span class="n">github</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">neosemantics</span><span class="o">/</span><span class="n">versions</span><span class="o">.</span><span class="n">json</span>
+<span class="n">Installing</span> <span class="n">Plugin</span> <span class="s1">&#39;n10s&#39;</span> <span class="kn">from</span> <span class="nn">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">neo4j</span><span class="o">-</span><span class="n">labs</span><span class="o">/</span><span class="n">neosemantics</span><span class="o">/</span><span class="n">releases</span><span class="o">/</span><span class="n">download</span><span class="o">/</span><span class="mf">4.4.0.1</span><span class="o">/</span><span class="n">neosemantics</span><span class="o">-</span><span class="mf">4.4.0.1</span><span class="o">.</span><span class="n">jar</span> <span class="n">to</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">neo4j</span><span class="o">/</span><span class="n">plugins</span><span class="o">/</span><span class="n">n10s</span><span class="o">.</span><span class="n">jar</span>
+<span class="n">Applying</span> <span class="n">default</span> <span class="n">values</span> <span class="k">for</span> <span class="n">plugin</span> <span class="n">n10s</span> <span class="n">to</span> <span class="n">neo4j</span><span class="o">.</span><span class="n">conf</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">14.423</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">Starting</span><span class="o">...</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">15.602</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">This</span> <span class="n">instance</span> <span class="ow">is</span> <span class="n">ServerId</span><span class="p">{</span><span class="n">eba2fb15</span><span class="p">}</span> <span class="p">(</span><span class="n">eba2fb15</span><span class="o">-</span><span class="mi">713</span><span class="n">d</span><span class="o">-</span><span class="mi">47</span><span class="n">ba</span><span class="o">-</span><span class="mi">92</span><span class="n">a5</span><span class="o">-</span><span class="mi">0</span><span class="n">a688696264d</span><span class="p">)</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">17.468</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="o">========</span> <span class="n">Neo4j</span> <span class="mf">4.4.8</span> <span class="o">========</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">21.713</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="p">[</span><span class="n">system</span><span class="o">/</span><span class="mi">00000000</span><span class="p">]</span> <span class="n">successfully</span> <span class="n">initialized</span><span class="p">:</span> <span class="n">CREATE</span> <span class="n">USER</span> <span class="n">podsservice</span> <span class="n">SET</span> <span class="n">PLAINTEXT</span> <span class="n">PASSWORD</span> <span class="s1">&#39;servicepass&#39;</span> <span class="n">SET</span> <span class="n">PASSWORD</span> <span class="n">CHANGE</span> <span class="n">NOT</span> <span class="n">REQUIRED</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">21.734</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="p">[</span><span class="n">system</span><span class="o">/</span><span class="mi">00000000</span><span class="p">]</span> <span class="n">successfully</span> <span class="n">initialized</span><span class="p">:</span> <span class="n">CREATE</span> <span class="n">USER</span> <span class="n">test</span> <span class="n">SET</span> <span class="n">PLAINTEXT</span> <span class="n">PASSWORD</span> <span class="s1">&#39;userpass&#39;</span> <span class="n">SET</span> <span class="n">PASSWORD</span> <span class="n">CHANGE</span> <span class="n">NOT</span> <span class="n">REQUIRED</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">30.268</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">Upgrading</span> <span class="n">security</span> <span class="n">graph</span> <span class="n">to</span> <span class="n">latest</span> <span class="n">version</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">30.268</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">Setting</span> <span class="n">version</span> <span class="k">for</span> <span class="s1">&#39;security-users&#39;</span> <span class="n">to</span> <span class="mi">2</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">30.270</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">Upgrading</span> <span class="s1">&#39;security-users&#39;</span> <span class="n">version</span> <span class="nb">property</span> <span class="kn">from</span> <span class="mi">2</span> <span class="n">to</span> <span class="mi">3</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">30.556</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">Called</span> <span class="n">db</span><span class="o">.</span><span class="n">clearQueryCaches</span><span class="p">():</span> <span class="n">Query</span> <span class="n">caches</span> <span class="n">successfully</span> <span class="n">cleared</span> <span class="n">of</span> <span class="mi">1</span> <span class="n">queries</span><span class="o">.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">30.667</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">Bolt</span> <span class="n">enabled</span> <span class="n">on</span> <span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="o">%</span><span class="mi">0</span><span class="p">]:</span><span class="mf">7687.</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">31.745</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">Remote</span> <span class="n">interface</span> <span class="n">available</span> <span class="n">at</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">pods</span><span class="o">-</span><span class="n">tacc</span><span class="o">-</span><span class="n">tacc</span><span class="o">-</span><span class="n">docpod</span><span class="p">:</span><span class="mi">7474</span><span class="o">/</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">31.750</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="nb">id</span><span class="p">:</span> <span class="n">B1F0F170083249DAAF9127203310961EF79B262C90EA04D9F08EB7F077DF19E7</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">31.750</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">name</span><span class="p">:</span> <span class="n">system</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">31.751</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">creationDate</span><span class="p">:</span> <span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span><span class="n">T00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">19.073</span><span class="n">Z</span>
+<span class="mi">2022</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">00</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mf">31.751</span><span class="o">+</span><span class="mi">0000</span> <span class="n">INFO</span>  <span class="n">Started</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>As you can see, because this is a Neo4J database template, we have the logs from the Neo4J database initializes and
+getting to it’s <code class="docutils literal notranslate"><span class="pre">Started</span></code> state.</p>
+</section>
+<section id="conclusion">
+<h3>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">¶</a></h3>
+<p>Congratulations! You’ve now created, registered, and accessed your first pod. There is a lot more you can do with
+the Pods service though. To learn more about the additional capabilities, please continue on to the Technical Guide.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="future-work-only-quickstart-is-currently-complete">
+<h2>Future work. Only quickstart is currently complete.<a class="headerlink" href="#future-work-only-quickstart-is-currently-complete" title="Link to this heading">¶</a></h2>
+<p>Please view our API Reference to see what additional functionality is currently available.</p>
+</section>
+<hr class="docutils" />
+<section id="api-reference">
+<h2>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">¶</a></h2>
+<p>The following link is to our live-documentation that takes our OpenAPI v3 specification that is automatically
+generated and gives users the public endpoints available within the Pods API along with request body expected
+and descriptions for each field.</p>
+<p><a class="reference external" href="https://tapis-project.github.io/live-docs/?service=Pods">https://tapis-project.github.io/live-docs/?service=Pods</a></p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/tapis-project/source/technical/pods.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Quick start &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="quick-start">
+<h1>Quick start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h1>
+<dl class="simple">
+<dt>We will be creating a pipeline that</dt><dd><ul class="simple">
+<li><p>pulls code from a private Github repository</p></li>
+<li><p>builds an image from a Dockerfile located in that source code</p></li>
+<li><p>then pushes the resultant image to a Dockerhub image registry</p></li>
+</ul>
+</dd>
+</dl>
+<p>In the examples below we assume you are using the TACC tenant with a base URL of <code class="docutils literal notranslate"><span class="pre">tacc.tapis.io</span></code> and that you have
+authenticated using PySDK or obtained an authorization token and stored it in the environment variable JWT,
+or perhaps both.</p>
+<section id="summary-of-steps">
+<h2>Summary of Steps<a class="headerlink" href="#summary-of-steps" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Create a <em>Group</em></p></li>
+<li><p>Create the <em>Identities</em> that the workflow executor will use to access both Github and Dockerhub on your behalf</p></li>
+<li><p>Create an <em>Archive</em> to which the results of the pipeline run will be persisted</p></li>
+<li><p>Create the <em>Pipeline</em> and its <em>Tasks</em> which act as instructions to the workflow executor</p></li>
+</ol>
+</section>
+<section id="creating-a-group">
+<h2>Creating a Group<a class="headerlink" href="#creating-a-group" title="Link to this heading">¶</a></h2>
+<p>Create a local file named <code class="docutils literal notranslate"><span class="pre">group.json</span></code> with json similar to the following:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;group_id&gt;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;users&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;&lt;user_id&gt;&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;is_admin&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You do not need to add your own Tapis id to the users list. The owner of the Group is added by default.</p>
+</div>
+<p>Replace <em>&lt;group_id&gt;</em> with your desired group id and <em>&lt;user_id&gt;</em> in the user objects with
+the tapis user ids of the other users that you want to grant access to this group’s workflow resources.</p>
+<p>Submit the definition.</p>
+</section>
+<hr class="docutils" />
+<section id="creating-identities">
+<h2>Creating Identities<a class="headerlink" href="#creating-identities" title="Link to this heading">¶</a></h2>
+<p>We will be creating 2 identity mappings. One for Github and one for Dockerhub. After creating
+the identities, we will need to retrieve the UUIDs of the newly created identities. You can do
+this in a separate call, or simple grab the UUID from the url in the result after each operation.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Do <strong>NOT</strong> commit these files to source control!</p>
+</div>
+<p>Create the first file named <code class="docutils literal notranslate"><span class="pre">github-identity.json</span></code> with the following json:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;github&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-github-identity&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;My github identity&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;credentials&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;github_username&gt;&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;personal_access_token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;github_personal_access_token&gt;&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Then submit the definition</p>
+<p>Create the second file named <code class="docutils literal notranslate"><span class="pre">dockerhub-identity.json</span></code> with the following json</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dockerhub&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-dockerhub-identity&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;My Dockerhub identity&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;credentials&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;docerkhub_username&gt;&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;dockerhub_access_token&gt;&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Then submit the definition</p>
+</section>
+<hr class="docutils" />
+<section id="creating-an-archive">
+<h2>Creating an Archive<a class="headerlink" href="#creating-an-archive" title="Link to this heading">¶</a></h2>
+<p>In this step, we create the Archive. The results of the pipeline run will be persisted to the archive.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This step requires that you have “<strong>MODIFY</strong>” permissions on some Tapis System. If you do not have access to one, you can create it following the instruction in the “Systems” section.</p>
+</div>
+<p>Create a local file named <code class="docutils literal notranslate"><span class="pre">archive.json</span></code> with json similar to the following:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-sample-archive&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;system&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;system_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;your-tapis-system-id&gt;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;archive_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/workflows/archive/&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The archive_dir is relative to your system’s rootDir. You can change this value to whatever you like.</p>
+</div>
+</section>
+<hr class="docutils" />
+<section id="creating-a-pipeline">
+<h2>Creating a Pipeline<a class="headerlink" href="#creating-a-pipeline" title="Link to this heading">¶</a></h2>
+<p>In this step, we define the pipeline. There are many more properties that can be defined
+at both the pipeline and task level, but for simplicity, we will be leaving them out.</p>
+<p>Create a local file named <code class="docutils literal notranslate"><span class="pre">pipeline.json</span></code> with json similar to the following:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-sample-workflow&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;archives&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">&quot;&lt;archive_id&gt;&quot;</span><span class="w"> </span><span class="p">]</span>
+<span class="w">  </span><span class="nt">&quot;tasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-image-build&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;image_build&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;builder&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;kaniko&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;context&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;branch&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;main&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;build_file_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;path/to&gt;/Dockerfile&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;sub_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;github&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;account&gt;/&lt;repo&gt;&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;visibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;private&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;identity_uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;github_identity_uuid&gt;&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;destination&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;tag&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;some_image_tag&gt;&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dockerhub&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;account&gt;/&lt;registry&gt;&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;identity_uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;dockerhub_identity_uuid&gt;&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Go through the definition above and replace all of the placeholders with the correct values.</p>
+</section>
+<hr class="docutils" />
+<section id="triggering-the-workflow">
+<h2>Triggering the Workflow<a class="headerlink" href="#triggering-the-workflow" title="Link to this heading">¶</a></h2>
+<p>Now it’s time to run the pipeline.</p>
+<p>After the pipeline has finished running, take a look in your Dockerhub image repository
+and you will find your newly pushed image.</p>
+<p>If you SSH into the <em>Tapis System</em> that you selected as your archive, you will also find
+that you have some new directories and files in your <strong>rootDir</strong>;</p>
+<p><code class="docutils literal notranslate"><span class="pre">/workflows/archive/&lt;UUID</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">pipeline</span> <span class="pre">run&gt;/my-image-build/output/.stdout</span></code>.</p>
+<p>If you want to find the output for any task for a given pipeline run, simply navigate
+to the archive directory, <code class="docutils literal notranslate"><span class="pre">cd</span></code> into directory with the pipline run UUID, then <code class="docutils literal notranslate"><span class="pre">cd</span></code> into
+the directory with that task’s name. Inside the <code class="docutils literal notranslate"><span class="pre">output/</span></code> directory, you will find all of
+the data created by that task.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../../_sources/tapis-project/source/technical/workflows/quick-start.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

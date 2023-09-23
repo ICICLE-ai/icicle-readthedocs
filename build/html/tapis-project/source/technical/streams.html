@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Streams &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="streams">
+<h1>Streams<a class="headerlink" href="#streams" title="Link to this heading">¶</a></h1>
+<img alt="../../../_images/tapis-v3-streams-api.png" src="../../../_images/tapis-v3-streams-api.png" />
+<section id="projects">
+<h2>Projects<a class="headerlink" href="#projects" title="Link to this heading">¶</a></h2>
+<p>Projects are defined at a top level in the hierarchy of Streams resources. A user registers a project by providing metadata information such as the principal Investigator, project URL, funding resource, etc. A list of authorized users can be added to various project roles to have a controlled access over the project resources. When a project is first registered, a collection is created in the back-end MongoDB. User permissions to access this collection are then set up in the security kernel. Every request to access the project resource or documents within (i.e sites, instruments, variables) goes through a security kernel check and only the authorized user requests are allowed to be processed.</p>
+<section id="create-project">
+<h3><strong>Create Project</strong><a class="headerlink" href="#create-project" title="Link to this heading">¶</a></h3>
+<p>With PySDK:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.create_project(project_name=&#39;tapis_demo_project_testuser6&#39;,description=&#39;test project&#39;, owner=&#39;testuser6&#39;, pi=&#39;testuser6&#39;, funding_resource=&#39;tapis&#39;, project_url=&#39;test.tacc.utexas.edu&#39;, project_id=&#39;tapis_demo_project_testuser6&#39;,active=True)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -v -X POST -H &quot;Content-Type:application/json&quot;  -H &quot;X-Tapis-Token:$jwt&quot; -d &#39;{&quot;project_name&quot;: &quot;tapis_demo_project_testuser6&quot;,
+                                                        &quot;project_id&quot;:&quot;tapis_demo_project_testuser6&quot;,
+                                                        &quot;owner&quot;: &quot;testuser6&quot;,
+                                                        &quot;pi&quot;: &quot;testuser6&quot;,
+                                                        &quot;description&quot;: &quot;test project&quot;,
+                                                        &quot;funding_resource&quot;: &quot;tapis&quot;,
+                                                        &quot;project_url&quot;: &quot;test.tacc.utexas.edu&quot;,
+                                                        &quot;active&quot;: &quot;True&quot;}&#39; $BASE_URL/v3/streams/projects
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>active: True
+description: test project
+funding_resource: tapis
+owner: testuser6
+permissions:
+users: [&#39;testuser6&#39;]
+pi: testuser6
+project_id: tapis_demo_project_testuser6
+project_name: tapis_demo_project_testuser6
+project_url: test.tacc.utexas.edu
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="list-projects">
+<h3><strong>List Projects</strong><a class="headerlink" href="#list-projects" title="Link to this heading">¶</a></h3>
+<p>With PySDK:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_projects()
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot; $BASE_URL/v3/streams/projects
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[
+ active: True
+ description: project for early adopters demo
+ funding_resource: tapis
+ owner: testuser6
+ permissions:
+ users: [&#39;testuser6&#39;]
+ pi: ajamthe
+ project_id: wq_demo_project12
+ project_name: wq_demo_project12
+ project_url: test.tacc.utexas.edu,
+
+ active: True
+ description: test project
+ funding_resource: tapis
+ owner: testuser6
+ permissions:
+ users: [&#39;testuser6&#39;]
+ pi: testuser6
+ project_id: tapis_demo_project_testuser6
+ project_name: tapis_demo_project_testuser6
+ project_url: test.tacc.utexas.edu,
+]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="get-project-details">
+<h3><strong>Get Project Details</strong><a class="headerlink" href="#get-project-details" title="Link to this heading">¶</a></h3>
+<p>With PySDK:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.get_project(project_id=&#39;tapis_demo_project_testuser6&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot; $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>active: True
+description: project for early demo
+funding_resource: tapis
+owner: testuser6
+permissions:
+users: [&#39;testuser6&#39;]
+pi: testuser6
+project_id: tapis_demo_project_testuser6
+project_name: tapis_demo_project_testuser6
+project_url: test.tacc.utexas.edu
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="update-project">
+<h3><strong>Update Project</strong><a class="headerlink" href="#update-project" title="Link to this heading">¶</a></h3>
+<p>With PySDK:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.update_project(project_id=&#39;tapis_demo_project_testuser6&#39;, project_name=&#39;tapis_demo_project_testuser6&#39;, pi=&#39;testuser6&#39;, owner=&#39;testuser6&#39;, description= &#39;changed description&#39;,project_url=&#39;tapis_demo_project.tacc.utexas.edu&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -v -X PUT -H &quot;Content-Type:application/json&quot;  -H &quot;X-Tapis-Token:$jwt&quot; -d &#39;{&quot;project_name&quot;: &quot;tapis_demo_project_testuser6&quot;,
+                                                        &quot;project_id&quot;:&quot;tapis_demo_project_testuser6&quot;,
+                                                        &quot;owner&quot;: &quot;testuser6&quot;,
+                                                        &quot;pi&quot;: &quot;testuser6&quot;,
+                                                        &quot;description&quot;: &quot;changed description&quot;,
+                                                        &quot;funding_resource&quot;: &quot;tapis&quot;,
+                                                        &quot;project_url&quot;: &quot;tapis_demo_project.tacc.utexas.edu&quot;,
+                                                        &quot;active&quot;: &quot;True&quot;}&#39; $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>active: True
+description: changed description
+funding_resource: tapis
+last_updated: 2020-07-20 17:34:58.848079
+owner: testuser6
+permissions:
+users: [&#39;testuser6&#39;]
+pi: testuser6
+project_id: tapis_demo_project_testuser6
+project_name: tapis_demo_project_testuser6
+project_url: tapis_demo_project.tacc.utexas.edu
+</pre></div>
+</div>
+</div>
+</section>
+<section id="delete-project">
+<h3><strong>Delete Project</strong><a class="headerlink" href="#delete-project" title="Link to this heading">¶</a></h3>
+<p>With PySDK:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.delete_project(project_id=&#39;tapis_demo_project_testuser6&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X DELETE -H &quot;X-tapis-token:$jwt&quot; $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>active: True
+description: project for early adopters demo
+funding_resource: tapis
+last_updated: 2020-12-04 15:06:41.460343
+owner: testuser6
+permissions:
+users: [&#39;testuser6&#39;]
+pi: testuser6
+project_id: tapis_demo_project_testuser6
+project_name: tapis_demo_project_testuser6
+project_url: test.tacc.utexas.edu
+tapis_deleted: True
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="sites">
+<h2>Sites<a class="headerlink" href="#sites" title="Link to this heading">¶</a></h2>
+<p>Site is a geographical location that may hold one or more instruments. Sites are next in the streams hierarchy and they inherit permissions from the projects. Project owners can create sites by providing the geographical information such as latitude, longitude and elevation of the site or GeoJSON encoded spatial information. This spatial information is useful when searching sites or data based on location. In the back-end database a site is represented as a JSON document within the project collection. Site permissions are inherited from the project.</p>
+<section id="create-site">
+<h3><strong>Create Site</strong><a class="headerlink" href="#create-site" title="Link to this heading">¶</a></h3>
+<p>With PySDK:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.create_site(project_id=&#39;tapis_demo_project_testuser6&#39;,request_body[{&quot;site_name&quot;:&quot;tapis_demo_site&quot;, &quot;site_id&quot;:&quot;tapis_demo_site&quot;, &quot;latitude&quot;:50,&quot;longitude&quot;:10, &quot;elevation&quot;:2,&quot;description&quot;:&quot;test_site&quot;}])
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$  curl -X POST -H &quot;Content-Type:application/json&quot; -H &quot;X-Tapis-Token:$jwt&quot; --data &#39;[{&quot;site_name&quot;:&quot;tapis_demo_site&quot;,&quot;latitude&quot;:50,&quot;longitude&quot;:10,&quot;elevation&quot;:2,&quot;site_id&quot;:&quot;tapis_demo_site&quot;, &quot;description&quot;:&quot;test_site&quot;}]&#39; $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chords_id: 27
+created_at: 2020-06-08 18:27:12.416134
+description: test_site
+elevation: 2
+latitude: 50
+location:
+coordinates: [10.0, 50.0]
+type: Point
+longitude: 10
+site_id: tapis_demo_site
+site_name: tapis_demo_site
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="list-sites">
+<h3><strong>List Sites</strong><a class="headerlink" href="#list-sites" title="Link to this heading">¶</a></h3>
+<p>With PySDK:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_sites(project_id=&#39;tapis_demo_project_testuser6&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[
+ chords_id: 13
+ created_at: 2020-07-20 19:00:55.220397
+ description: demo site
+ elevation: 1
+ latitude: 1.0
+ location:
+ coordinates: [2.0, 1.0]
+ type: Point
+ longitude: 2
+ site_id: demo_site
+ site_name: demo_site,
+
+ chords_id: 12
+ created_at: 2020-07-20 18:15:25.404740
+ description: test_site
+ elevation: 2
+ latitude: 50
+ location:
+ coordinates: [10.0, 50.0]
+ type: Point
+ longitude: 10
+ site_id: tapis_demo_site
+ site_name: tapis_demo_site]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="get-site-details">
+<h3><strong>Get Site Details</strong><a class="headerlink" href="#get-site-details" title="Link to this heading">¶</a></h3>
+<p>With PySDK:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.get_site(project_id=&#39;tapis_demo_project_testuser6&#39;, site_id=&#39;tapis_demo_site1&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites/tapis_demo_site
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<p>$ t.streams.get_site(project_id=’tapis_demo_project_testuser6’, site_id=’tapis_demo_site’)</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chords_id: 12
+created_at: 2020-07-20 18:15:25.404740
+description: test_site
+elevation: 2
+latitude: 50
+location:
+coordinates: [10.0, 50.0]
+type: Point
+longitude: 10
+site_id: tapis_demo_site
+site_name: tapis_demo_site
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="update-site">
+<h3><strong>Update Site</strong><a class="headerlink" href="#update-site" title="Link to this heading">¶</a></h3>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X PUT -H &quot;Content-Type:application/json&quot;  -H &quot;X-Tapis-Token:$jwt&quot; -d &#39;{&quot;project_id&quot;: &quot;tapis_demo_project_testuser6&quot;,&quot;site_name&quot;:&quot;tapis_demo_site&quot;,&quot;latitude&quot;:10, &quot;longitude&quot;:80, &quot;elevation&quot;:2, &quot;description&quot;:&quot;test site changed&quot;}&#39; $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites/tapis_demo_site
+</pre></div>
+</div>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.update_site(project_id=&#39;tapis_demo_project_testuser6&#39;,site_name=&#39;tapis_demo_site&#39;, site_id=&#39;tapis_demo_site&#39;, latitude=10, longitude = 80, elevation=2,description=&#39;test_site changed&#39;)
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chords_id: 4
+created_at: 2020-08-10 19:36:48.649316
+description: test_site changed
+elevation: 2
+last_updated: 2020-08-10 19:37:20.115021
+latitude: 10
+location:
+coordinates: [80.0, 10.0]
+type: Point
+longitude: 80
+site_id: tapis_demo_site
+site_name: tapis_demo_site
+</pre></div>
+</div>
+</div>
+</section>
+<section id="delete-site">
+<h3><strong>Delete Site</strong><a class="headerlink" href="#delete-site" title="Link to this heading">¶</a></h3>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X DELETE -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites/tapis_demo_site
+</pre></div>
+</div>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.delete_site(project_id=&#39;tapis_demo_project_testuser6&#39;, site_id=&#39;tapis_demo_site&#39;)
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="instruments">
+<h2>Instruments<a class="headerlink" href="#instruments" title="Link to this heading">¶</a></h2>
+<p>Instruments are physical entities that may have one or more embedded sensors to sense various parameters such as temperature, relative humidity, specific conductivity, etc. These sensors referred to as variables in Streams API generate measurements, which are stored in the influxDB along with a ISO8601 timestamp. Instruments are associated with specific sites and projects. Information about the instruments such as site and project ids, name and description of the instrument, etc. are stored in the mongoDB sites JSON document.</p>
+<section id="create-instrument">
+<h3><strong>Create Instrument</strong><a class="headerlink" href="#create-instrument" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.create_instrument(project_id=&#39;tapis_demo_project_testuser6&#39;,site_id=&#39;tapis_demo_site&#39;,request_body=[{&quot;topic_category_id&quot;:&quot;2&quot;,  &quot;inst_name&quot;:&quot;tapis_demo_instrument&quot;,&quot;inst_description&quot;:&quot;demo instrument&quot;, &quot;inst_id&quot;:&quot;tapis_demo_instrument&quot;}])
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -v -X POST -H &quot;Content-Type:application/json&quot; -H &quot;X-Tapis-Token:$jwt&quot; --data &#39;[{&quot;topic_category_id&quot;:&quot;2&quot;,&quot;,&quot;inst_name&quot;:&quot;tapis_demo_instrument&quot;,&quot;inst_description&quot;:&quot;demo instrument&quot;, &quot;inst_id&quot;:&quot;tapis_demo_instrument&quot;}]&#39;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites/tapis_demo_site/instruments
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chords_id: 10
+created_at: 2020-07-20 20:09:11.990814
+inst_description: demo instrument
+inst_id: tapis_demo_instrument
+inst_name: tapis_demo_instrument
+topic_category_id: 2
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="list-instruments">
+<h3><strong>List Instruments</strong><a class="headerlink" href="#list-instruments" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_instruments(project_id=&#39;tapis_demo_project_testuser6&#39;, site_id=&#39;tapis_demo_site&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites/tapis_demo_site/instruments
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[
+ chords_id: 10
+ created_at: 2020-07-20 20:09:11.990814
+ inst_description: demo instrument
+ inst_id: tapis_demo_instrument
+ inst_name: tapis_demo_instrument
+ topic_category_id: 2,
+
+ chords_id: 11
+ created_at: 2020-07-20 20:14:20.512383
+ inst_description: demo instrument
+ inst_id: tapis_demo_instrument
+ inst_name: tapis_demo_instrument1
+ project_id: tapis_demo_project_testuser6
+ site_id: tapis_demo_site
+ topic_category_id: 2,
+
+ chords_id: 12
+ created_at: 2020-07-20 20:20:45.171473
+ inst_description: demo instrument
+ inst_id: demo_instrument
+ inst_name: demo_instrument
+ topic_category_id: 2,
+
+ chords_id: 13
+ created_at: 2020-07-20 20:21:52.842495
+ inst_description: demo instrument
+ inst_id: demo_instrument_aj
+ inst_name: demo_instrument_aj
+ topic_category_id: 2]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="get-instrument-details">
+<h3><strong>Get instrument Details</strong><a class="headerlink" href="#get-instrument-details" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_instruments(project_id=&#39;tapis_demo_project_testuser6&#39;, site_id=&#39;tapis_demo_site&#39;,inst_id=&#39;demo_instrument&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites/tapis_demo_site/instruments/demo_instrument
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chords_id: 12
+created_at: 2020-07-20 20:20:45.171473
+inst_description: demo instrument
+inst_id: demo_instrument
+inst_name: demo_instrument
+topic_category_id: 2
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="update-instrument">
+<h3><strong>Update Instrument</strong><a class="headerlink" href="#update-instrument" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.update_instrument(inst_id= &#39;Ohio_River_Robert_C_Byrd_Locks&#39;, project_id=&#39;wq_demo_tapis_streams_proj2020-08-26T08:41:11.813391&#39;, site_id=&#39;wq_demo_site&#39;, inst_name=&#39;test&#39;, inst_description=&#39;test&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X PUT -H &quot;X-Tapis-token:$jwt&quot; -H &quot;Content-Type:application/json&quot; --data &#39;{&quot;inst_id&quot;: &quot;Ohio_River_Robert_C_Byrd_Locks&quot;,
+&quot;site_id&quot;: &quot;wq_demo_site&quot;, &quot;inst_name&quot;: &quot;UpdatedNAME&quot;,&quot;inst_description&quot;: &quot;updated descript&quot;}&#39;
+$BASE_URL/v3/streams/projects/wq_demo_tapis_streams_proj2020-08-26T08:41:11.813391/sites/wq_demo_site/instruments/Ohio_River_Robert_C_Byrd_Locks&#39;
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chords_id: 6
+inst_description: test
+inst_id: Ohio_River_Robert_C_Byrd_Locks
+inst_name: test
+site_chords_id: 7
+updated_at: 2020-08-26 18:40:07.534077
+variables: [
+chords_id: 21
+shortname: temp
+updated_at: 2020-08-26 16:15:49.835211
+var_id: temp
+var_name: temperature,
+chords_id: 22
+shortname: bat
+updated_at: 2020-08-26 16:15:50.349601
+var_id: batv
+var_name: battery,
+chords_id: 23
+shortname: spc
+updated_at: 2020-08-26 16:15:50.749192
+var_id: spc
+var_name: specific_conductivity,
+chords_id: 24
+shortname: turb
+updated_at: 2020-08-26 16:15:51.158687
+var_id: turb
+var_name: turbidity,
+chords_id: 25
+shortname: ph
+updated_at: 2020-08-26 16:15:51.588573
+var_id: ph
+var_name: ph_level]
+</pre></div>
+</div>
+</div>
+</section>
+<section id="delete-instrument">
+<h3><strong>Delete Instrument</strong><a class="headerlink" href="#delete-instrument" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.delete_instrument(inst_id= &#39;tapis_demo_instrument&#39;, project_id=&#39;tapis_demo_project_testuser6_3&#39;, site_id=&#39;tapis_demo_site&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X DELETE -H &quot;X-Tapis-token:$jwt&quot; $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6_3/sites/tapis_demo_site/instruments/tapis_demo_instrument
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="variables">
+<h2>Variables<a class="headerlink" href="#variables" title="Link to this heading">¶</a></h2>
+<section id="create-variables">
+<h3><strong>Create Variables</strong><a class="headerlink" href="#create-variables" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.create_variable(project_id=&#39;tapis_demo_project_testuser6&#39;, inst_id=&#39;demo_instrument&#39;, site_id=&#39;tapis_demo_site&#39;, request_body=[{&quot;topic_category_id&quot;:&quot;2&quot;, &quot;var_name&quot;:&quot;battery&quot;, &quot;shortname&quot;:&quot;bat&quot;, &quot;var_id&quot;:&quot;batv&quot;}])
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -v -X POST -H &quot;Content-Type:application/json&quot; -H &quot;X-Tapis-Token:$jwt&quot; --data &#39;{&quot;project_id&quot;:&quot;tapis_demo_project_testuser6&quot;, &quot;topic_category_id&quot;:&quot;2&quot;,&quot;site_id&quot;:&quot;tapis_demo_site&quot;, &quot;inst_id&quot;:&quot;demo_instrument&quot;, &quot;var_name&quot;:&quot;battery&quot;, &quot;shortname&quot;:&quot;bat&quot;, &quot;var_id&quot;:&quot;batv&quot;}&#39;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites/tapis_demo_site/instruments/demo_instrument/variables
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chords_id: 39
+shortname: bat
+updated_at: 2020-07-20 21:51:38.712035
+var_id: batv
+var_name: battery
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="list-variables">
+<h3><strong>List Variables</strong><a class="headerlink" href="#list-variables" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_variables(project_id=&#39;tapis_demo_project_testuser6&#39;,site_id=&#39;tapis_demo_site&#39;, inst_id=&#39;demo_instrument&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;Content-Type:application/json&quot; -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6/sites/tapis_demo_site/instruments/demo_instrument/variables
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[
+ chords_id: 38
+ shortname: bat
+ updated_at: 2020-07-20 21:50:46.382558
+ var_id: batv
+ var_name: battery,
+
+ chords_id: 39
+ shortname: bat
+ updated_at: 2020-07-20 21:51:38.712035
+ var_id: batv
+ var_name: battery,
+
+ chords_id: 40
+ inst_id: demo_instrument_1
+ project_id: tapis_demo_project_testuser6
+ shortname: bat
+ site_id: tapis_demo_site
+ topic_category_id: 2
+ updated_at: 2020-07-20 21:56:45.555381
+ var_id: batv
+ var_name: battery]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="get-variable-details">
+<h3><strong>Get Variable Details</strong><a class="headerlink" href="#get-variable-details" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.get_variable(project_id=&#39;tapis_demo_project_testuser6_1&#39;, site_id=&#39;tapis_site_final&#39;, inst_id=&#39;tapis_inst_final&#39;, var_id=&#39;batv&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6_1/sites/tapis_site_final/instruments/tapis_inst_final/variables/batv
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[
+chords_id: 21
+shortname: bat
+updated_at: 2020-08-18 20:46:11.673033
+var_id: batv
+var_name: battery]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="update-variable">
+<h3><strong>Update Variable</strong><a class="headerlink" href="#update-variable" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.update_variable(var_name=&#39;&quot;updated_temp&#39;, var_id=&#39;temp&#39;, shortname=&#39;temp_updated&#39;, project_id=&#39;wq_demo_tapis_streams_proj2020-08-25T16:21:30.113392&#39;, site_id=&#39;wq_demo_site&#39;,inst_id=&#39;Ohio_River_Robert_C_Byrd_Locks&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X PUT -H &quot;X-Tapis-token:$jwt&quot; -H &quot;Content-type:application/json&quot;  --data &#39;{ &quot;var_name&quot;: &quot;updated_temp&quot;,&quot;var_id&quot;: &quot;temp&quot;,&quot;shortname&quot;:&quot;temp_updated&quot;}&#39; $BASE_URL/v3/streams/projects/wq_demo_tapis_streams_proj2020-08-25T16:21:30.113392/sites/wq_demo_site/instruments/Ohio_River_Robert_C_Byrd_Locks/variables/temp
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chords_id: 16
+inst_chords_id: 5
+shortname: temp_updated
+site_chords_id: 6
+updated_at: 2020-08-27 14:36:04.271154
+var_id: temp
+var_name: &quot;updated_temp
+</pre></div>
+</div>
+</div>
+</section>
+<section id="delete-variable">
+<h3><strong>Delete Variable</strong><a class="headerlink" href="#delete-variable" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.delete_variable( var_id=&#39;139&#39;, project_id=&#39;tapis_demo_instrument&#39;, site_id=&#39;tapis_demo_site&#39;,inst_id=&#39;tapis_demo_instrument&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -v -X DELETE  -H &quot;Content-Type:application/json&quot; -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/projects/tapis_demo_project_testuser6_3/sites/tapis_demo_site/instruments/tapis_demo_instrument/variables/batv
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>inst_chords_id: 24
+updated_at: 2020-12-03 02:52:27.437378
+var_id: 139
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="measurements">
+<h2>Measurements<a class="headerlink" href="#measurements" title="Link to this heading">¶</a></h2>
+<section id="create-measurements">
+<h3><strong>Create Measurements</strong><a class="headerlink" href="#create-measurements" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.create_measurement(inst_id=&#39;demo_instrument&#39;,vars=[{&quot;batv&quot;:10, &quot;temp&quot;:90, &quot;datetime&quot;:&quot;2020-07-20T22:19:25Z&quot;}])
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -v -X POST -H &quot;Content-Type:application/json&quot; -H &quot;X-Tapis-Token:$jwt&quot; --data &#39;{&quot;inst_id&quot;:&quot;demo_instrument&quot;, &quot;vars&quot;:[{&quot;datetime&quot;:&quot;2020-07-20T23:19:25Z&quot;, &quot;batv&quot;:10, &quot;temp&quot;:90}]}&#39;  $BASE_URL/v3/streams/measurements
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Measurements Saved&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;batv&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;2020-07-20T23:19:25Z&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;temp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;2020-07-20T23:19:25Z&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">90</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w"> </span><span class="p">},</span>
+<span class="w"> </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="list-measurements">
+<h3><strong>List Measurements</strong><a class="headerlink" href="#list-measurements" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_measurements(inst_id=&#39;demo_instrument&#39;,start_date=&#39;2020-05-08T00:00:00Z&#39;,end_date=&#39;2020-07-21T22:19:25Z&#39;, format=&#39;csv&#39;,project_id=&#39;tapis_demo_project_testuser6&#39;,site_id=&#39;tapis_demo_site&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/measurements/demo_instrument
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>b&#39;time,batv\n2020-07-20T22:19:25Z,10.0\n2020-07-20T23:19:25Z,10.0\n&#39;
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="channels">
+<h2>Channels<a class="headerlink" href="#channels" title="Link to this heading">¶</a></h2>
+<section id="channel-alert-types">
+<h3><strong>Channel Alert Types</strong><a class="headerlink" href="#channel-alert-types" title="Link to this heading">¶</a></h3>
+</section>
+<section id="channel-actions">
+<h3><strong>Channel Actions</strong><a class="headerlink" href="#channel-actions" title="Link to this heading">¶</a></h3>
+<p>The type of actions that a channel should be performed can be defined under the action parameter within a triggers_with_actions object.</p>
+</section>
+<section id="create-channels">
+<h3><strong>Create Channels</strong><a class="headerlink" href="#create-channels" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.create_channels(channel_id=&quot;demo.tapis.channel&quot;,
+                            channel_name=&#39;demo.tapis.channel&#39;,
+                            template_id=&quot;demo_channel_template&quot;,
+                            triggers_with_actions=[{
+                                &quot;inst_ids&quot;:[&quot;demo_instrument&quot;],
+                                &quot;condition&quot;:{
+                                        &quot;key&quot;:&quot;demo_instrument.batv&quot;,
+                                        &quot;operator&quot;:&quot;&gt;&quot;,
+                                        &quot;val&quot;:20 },
+                                &quot;action&quot;:{
+                                        &quot;method&quot;:&quot;ACTOR&quot;,
+                                        &quot;actor_id&quot; :&quot;XXXX&quot;,
+                                        &quot;message&quot;:&quot;Instrument: demo_instrument exceeded threshold&quot;, &quot;abaco_base_url&quot;:&quot;https://api.tacc.utexas.edu&quot;,&quot;nonces&quot;:&quot;XXXX-YYYY-ZZZZ&quot;
+                        }}])
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -v -X POST -H &quot;Content-Type:application/json&quot; -H &quot;X-Tapis-Token:$jwt&quot; --data &#39;{&quot;channel_id&quot;:&quot;demo.tapis.channel&quot;,&quot;channel_name&quot;:&quot;demo.tapis.channel_1&quot;,&quot;template_id&quot;:&quot;demo_channel_template&quot;,&quot;triggers_with_actions&quot;:[{&quot;inst_ids&quot;:[&quot;demo_instrument&quot;],&quot;condition&quot;:{&quot;key&quot;:&quot;demo_instrument.batv&quot;,&quot;operator&quot;:&quot;&gt;&quot;, &quot;val&quot;:&quot;20&quot;}, &quot;action&quot;:{&quot;method&quot;:&quot;ACTOR&quot;,&quot;actor_id&quot; :&quot;XXXX&quot;,&quot;message&quot;:&quot;Instrument: demo_instrument batv exceeded threshold&quot;, &quot;abaco_base_url&quot;:&quot;https://api.tacc.utexas.edu&quot;,&quot;nonces&quot;:&quot;XXXX-YYYY-ZZZZ&quot;}}]}&#39;  $BASE_URL/v3/streams/channels
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>channel_id: demo.tapis.channel
+channel_name: demo.tapis.channel
+create_time: 2020-07-21 03:02:51.755215
+last_updated: 2020-07-21 03:02:51.755227
+permissions:
+users: [&#39;testuser6&#39;]
+status: ACTIVE
+template_id: demo_channel_template
+triggers_with_actions: [
+action:
+abaco_base_url: https://api.tacc.utexas.edu
+actor_id: XXXX
+message: Instrument: demo_instrument exceeded threshold
+method: ACTOR
+nonces: XXXX-YYYY-ZZZZ
+condition:
+key: demo_instrument.batv
+operator: &gt;
+val: 20
+inst_ids: [&#39;demo_instrument&#39;]]
+</pre></div>
+</div>
+</div>
+</section>
+<section id="list-channels">
+<h3><strong>List Channels</strong><a class="headerlink" href="#list-channels" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_channels()
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/channels
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Channels found&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="get-channel-details">
+<h3><strong>Get Channel Details</strong><a class="headerlink" href="#get-channel-details" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.get_channel(channel_id=&#39;demo.tapis.channel&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/channels/demo.tapis.channel
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>channel_id: demo.tapis.channel
+channel_name: demo.tapis.channel
+create_time: 2020-07-21 03:02:51.755215
+last_updated: 2020-07-21 03:02:51.755227
+permissions:
+users: [&#39;testuser6&#39;]
+status: ACTIVE
+template_id: demo_channel_template
+triggers_with_actions: [
+action:
+abaco_base_url: https://api.tacc.utexas.edu
+actor_id: XXXX
+message: Instrument: demo_instrument exceeded threshold
+method: ACTOR
+nonces: XXXX-YYYY-ZZZZ
+condition:
+    key: demo_instrument.batv
+    operator: &gt;
+    val: 20
+    inst_ids: [&#39;demo_instrument&#39;]]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="update-channels">
+<h3><strong>Update Channels</strong>:<a class="headerlink" href="#update-channels" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.update_channel(channel_id=&quot;test1&quot;, channel_name=&#39;demo.wq.channel&#39;, template_id=&quot;demo_channel_template&quot;,triggers_with_actions=[{&quot;inst_ids&quot;:[
+&quot;Ohio_River_Robert_C_Byrd_Locks&quot;],&quot;condition&quot;:{&quot;key&quot;:&quot;Ohio_River_Robert_C_Byrd_Locks.temp&quot;,&quot;operator&quot;:&quot;&gt;&quot;, &quot;val&quot;:30},
+&quot;action&quot;:{&quot;method&quot;:&quot;ACTOR&quot;,&quot;actor_id&quot; :&quot;XXXX&quot;,&quot;message&quot;:&quot;Instrument: Ohio_River_Robert_C_Byrd_Locks  exceeded threshold&quot;,
+&quot;abaco_base_url&quot;:&quot;https://api.tacc.utexas.edu&quot;,&quot;nonces&quot;:&quot;XXXX-YYYY-ZZZZ&quot; }}])
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X PUT -H &quot;X-Tapis-Token:$jwt&quot; -H &quot;Content-Type:application/json&quot; $BASE_URL/v3/streams/channels/test1 -d &#39;{&quot;channel_id&quot;: &quot;test1&quot;,&quot;channel_name&quot;:&quot;demo.wq.channel&quot;,&quot;template_id&quot;: &quot;demo_channel_template&quot;,
+&quot;triggers_with_actions&quot;: [{&quot;inst_ids&quot;: [&quot;Ohio_River_Robert_C_Byrd_Locks&quot; ],
+&quot;condition&quot;: {&quot;key&quot;: &quot;Ohio_River_Robert_C_Byrd_Locks.temp&quot;,&quot;operator&quot;: &quot;&gt;&quot;,&quot;val&quot;: &quot;40&quot; } }]}&#39;
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>channel_id: test1
+channel_name: demo.wq.channel
+create_time: 2020-08-18 20:51:41.350377
+last_updated: 2020-08-18 21:57:42.174860
+permissions:
+users: [&#39;testuser2&#39;]
+status: ACTIVE
+template_id: demo_channel_template
+triggers_with_actions: [
+action:
+abaco_base_url: https://api.tacc.utexas.edu
+actor_id: XXXX
+message: Instrument: Ohio_River_Robert_C_Byrd_Locks  exceeded threshold
+method: ACTOR
+nonces: XXXX-YYYY-ZZZZ
+condition:
+key: Ohio_River_Robert_C_Byrd_Locks.temp
+operator: &gt;
+val: 30
+inst_ids: [&#39;Ohio_River_Robert_C_Byrd_Locks&#39;]]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="update-channels-status">
+<h3><strong>Update Channels Status</strong><a class="headerlink" href="#update-channels-status" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.update_status(channel_id=&#39;demo.tapis.channel&#39;, status=&#39;INACTIVE&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X POST -H &quot;Content-Type:application/json&quot; -H &quot;X-Tapis-Token:$jwt&quot; -d &#39;{&quot;status&quot;:&quot;INACTIVE&quot;}&#39; $BASE_URL/v3/streams/channels/demo.tapis.channel
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>channel_id: demo.tapis.channel
+channel_name: demo.tapis.channel
+create_time: 2020-07-21 03:02:51.755215
+last_updated: 2020-07-22 18:09:19.940080
+permissions:
+users: [&#39;testuser6&#39;]
+status: INACTIVE
+template_id: demo_channel_template
+triggers_with_actions: [
+action:
+abaco_base_url: https://api.tacc.utexas.edu
+actor_id: XXXX
+message: Instrument: demo_instrument exceeded threshold
+method: ACTOR
+nonces: XXXX-YYYY-ZZZZ
+condition:
+key: demo_instrument.batv
+operator: &gt;
+val: 90
+inst_ids: [&#39;demo_instrument&#39;]]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="templates">
+<h2>Templates<a class="headerlink" href="#templates" title="Link to this heading">¶</a></h2>
+<section id="create-template">
+<h3><strong>Create Template</strong><a class="headerlink" href="#create-template" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.create_template(template_id=&#39;test_template_for_tutorial&#39;, type=&#39;stream&#39;,
+        script=&#39; var crit lambda \n var channel_id string\n stream\n    |from()\n        .measurement(\&#39;tsdata\&#39;)\n        &#39;
+               &#39; .groupBy(\&#39;var\&#39;)\n   |alert()\n       &#39;
+               &#39; .id(channel_id +  \&#39; {{ .Name }}/{{ .Group }}/{{.TaskName}}/{{index .Tags \&quot;var\&quot; }}\&#39;)\n         .crit(crit)\n    .noRecoveries()\n      &#39;
+               &#39;  .message(\&#39;{{.ID}} is {{ .Level}} at time: {{.Time}} as value: {{ index .Fields \&quot;value\&quot; }} exceeded the threshold\&#39;)\n       &#39;
+               &#39; .details(\&#39;\&#39;)\n         .post()\n         .endpoint(\&#39;api-alert\&#39;)\n     .captureResponse()\n    |httpOut(\&#39;msg\&#39;)&#39;, _tapis_debug=True)
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>create_time: 2020-07-22 15:30:58.244391
+last_updated: 2020-07-22 15:30:58.244407
+permissions:
+users: [&#39;testuser6&#39;]
+script:  var crit lambda
+ var channel_id string
+ stream
+    |from()
+        .measurement(&#39;tsdata&#39;)
+         .groupBy(&#39;var&#39;)
+   |alert()
+        .id(channel_id +  &#39; {{ .Name }}/{{ .Group }}/{{.TaskName}}/{{index .Tags &quot;var&quot; }}&#39;)
+         .crit(crit)
+    .noRecoveries()
+        .message(&#39;{{.ID}} is {{ .Level}} at time: {{.Time}} as value: {{ index .Fields &quot;value&quot; }} exceeded the threshold&#39;)
+        .details(&#39;&#39;)
+         .post()
+         .endpoint(&#39;api-alert&#39;)
+     .captureResponse()
+    |httpOut(&#39;msg&#39;)
+template_id: test_template_for_tutorial
+type: stream
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="list-templates">
+<h3><strong>List Templates</strong><a class="headerlink" href="#list-templates" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_templates()
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot;  $BASE_URL/v3/streams/templates
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Templates found&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="get-template-details">
+<h3><strong>Get Template Details</strong><a class="headerlink" href="#get-template-details" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.get_template(template_id=&#39;test_template_for_tutorial&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl  -H &quot;X-Tapis-Token:$jwt&quot; $BASE_URL/v3/streams/templates/test_template_for_tutorial
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>create_time: 2020-07-22 15:30:58.244391
+last_updated: 2020-07-22 15:30:58.244407
+permissions:
+users: [&#39;testuser6&#39;]
+script:  var crit lambda
+ var channel_id string
+ stream
+    |from()
+        .measurement(&#39;tsdata&#39;)
+         .groupBy(&#39;var&#39;)
+   |alert()
+        .id(channel_id +  &#39; {{ .Name }}/{{ .Group }}/{{.TaskName}}/{{index .Tags &quot;var&quot; }}&#39;)
+         .crit(crit)
+    .noRecoveries()
+        .message(&#39;{{.ID}} is {{ .Level}} at time: {{.Time}} as value: {{ index .Fields &quot;value&quot; }} exceeded the threshold&#39;)
+        .details(&#39;&#39;)
+         .post()
+         .endpoint(&#39;api-alert&#39;)
+     .captureResponse()
+    |httpOut(&#39;msg&#39;)
+template_id: test_template_for_tutorial
+type: stream
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="update-template">
+<h3><strong>Update Template</strong><a class="headerlink" href="#update-template" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>t.streams.update_template(template_id=&#39;test_template_for_tutorial&#39;, type=&#39;stream&#39;,
+        script=&#39; var period=5s\n var every=0s\n var crit lambda \n var channel_id string\n stream\n    |from()\n        .measurement(\&#39;tsdata\&#39;)\n        &#39;
+               &#39; .groupBy(\&#39;var\&#39;)\n   |alert()\n       &#39;
+               &#39; .id(channel_id +  \&#39; {{ .Name }}/{{ .Group }}/{{.TaskName}}/{{index .Tags \&quot;var\&quot; }}\&#39;)\n         .crit(crit)\n    .noRecoveries()\n      &#39;
+               &#39;  .message(\&#39;{{.ID}} is {{ .Level}} at time: {{.Time}} as value: {{ index .Fields \&quot;value\&quot; }} exceeded the threshold\&#39;)\n       &#39;
+               &#39; .details(\&#39;\&#39;)\n         .post()\n         .endpoint(\&#39;api-alert\&#39;)\n     .captureResponse()\n    |httpOut(\&#39;msg\&#39;)&#39;, _tapis_debug=True)
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>create_time: 2020-08-19 19:48:59.177935
+last_updated: 2020-08-19 19:50:00.102827
+permissions:
+users: [&#39;testuser2&#39;]
+script:  var period=5s
+ var every=0s
+ var crit lambda
+ var channel_id string
+ stream
+    |from()
+        .measurement(&#39;tsdata&#39;)
+         .groupBy(&#39;var&#39;)
+   |alert()
+        .id(channel_id +  &#39; {{ .Name }}/{{ .Group }}/{{.TaskName}}/{{index .Tags &quot;var&quot; }}&#39;)
+         .crit(crit)
+    .noRecoveries()
+        .message(&#39;{{.ID}} is {{ .Level}} at time: {{.Time}} as value: {{ index .Fields &quot;value&quot; }} exceeded the threshold&#39;)
+        .details(&#39;&#39;)
+         .post()
+         .endpoint(&#39;api-alert&#39;)
+     .captureResponse()
+    |httpOut(&#39;msg&#39;)
+template_id: test_template_update
+type: stream
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="alerts">
+<h2>Alerts<a class="headerlink" href="#alerts" title="Link to this heading">¶</a></h2>
+<section id="list-alerts">
+<h3><strong>List Alerts</strong><a class="headerlink" href="#list-alerts" title="Link to this heading">¶</a></h3>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_alerts(channel_id=&#39;demo_wq_channel2020-06-19T17_34_46.425419&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl  -H &quot;X-Tapis-Token:$jwt&quot; $BASE_URL/v3/streams/channels/demo_wq_channel2020-06-19T17_34_46.425419/alerts
+</pre></div>
+</div>
+<p>The response will look something like the following:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>alerts: [
+    actor_id: XXXX
+    alert_id: 70fa63b4-c6b1-45a4-91a8-f4e9803ec898
+    channel_id: demo_wq_channel2020-06-19T17_34_46.425419
+    channel_name: demo.wq.channel
+    create_time: 2020-06-19 20:51:44.390887
+    execution_id: 7mBGaJbD4q0M1
+    message: demo_wq_channel2020-06-19T17_34_46.425419 tsdata/var=11/demo_wq_channel2020-06-19T17_34_46.425419/11 is CRITICAL at time: 2020-06-19 20:51:43.229988 +0000 UTC as value: 150 exceeded the threshold,
+    actor_id: XXXX
+    alert_id: c16ab843-8417-4af0-a06c-ce1e4e7e4816
+    channel_id: demo_wq_channel2020-06-19T17_34_46.425419
+    channel_name: demo.wq.channel
+    create_time: 2020-06-19 20:51:21.138143
+    execution_id: ByOkp5W8Jxkqj
+    message: demo_wq_channel2020-06-19T17_34_46.425419 tsdata/var=11/demo_wq_channel2020-06-19T17_34_46.425419/11 is CRITICAL at time: 2020-06-19 20:51:20.114319 +0000 UTC as value: 150 exceeded the threshold,
+    actor_id: XXXX
+    alert_id: 4c4b7e70-a034-419b-be8c-2c337803e5d4
+    channel_id: demo_wq_channel2020-06-19T17_34_46.425419
+    channel_name: demo.wq.channel
+    create_time: 2020-06-19 20:51:10.454269
+    execution_id: jboJWNqRKAA6V
+    message: demo_wq_channel2020-06-19T17_34_46.425419 tsdata/var=11/demo_wq_channel2020-06-19T17_34_46.425419/11 is CRITICAL at time: 2020-06-19 20:51:09.862752 +0000 UTC as value: 150 exceeded the threshold]
+    num_of_alerts: 3
+]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="roles">
+<h2>Roles<a class="headerlink" href="#roles" title="Link to this heading">¶</a></h2>
+<p>Streams service uses <strong>roles</strong>  to manage permissions on the streams resources. CRUD operations on Streams resources such as Sites, Instruments and  Variables can be performed by authorized users having a specific role on the Project. Similarly CRUD operations on Channels and Templates can be done by authorized users having specific roles. Streams service supports three types of roles: <em>admin</em>, <em>manager</em> and <em>user</em>.</p>
+<p><strong>Admin</strong> has elevated privileges. An <em>admin</em> can create, update, or delete any of the Streams resources.</p>
+<p><strong>Manager</strong> can perform all read and write operations on Streams resources, with an exception of deleting them.</p>
+<p><strong>User</strong> can only perform read operations on the resources and are not authorized to write or delete the resources.</p>
+<p>Table 1 below summarizes the authorized actions with respect to user roles.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Role</p></th>
+<th class="head" colspan="2"><p>Request permitted</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>admin</p></td>
+<td colspan="2"><p>GET, PUT, POST, DELETE</p></td>
+</tr>
+<tr class="row-odd"><td><p>manager</p></td>
+<td colspan="2"><p>GET, PUT, POST</p></td>
+</tr>
+<tr class="row-even"><td><p>user</p></td>
+<td colspan="2"><p>GET</p></td>
+</tr>
+</tbody>
+</table>
+<p>When a user creates project, channel or template, an admin role of the form: <strong>streams_projects_$project-oid_admin</strong>, <strong>streams_channels_$channel-oid_admin</strong> or <strong>streams_templates_$template-oid_admin</strong>, respectively is created in the Security Kernel and is assigned to the requesting (JWT) user. Oid is the unique object id generated by the backend MongoDB for each of the Project, Channel or Template.</p>
+<p>Admins can further grant roles such as <strong>admin</strong>, <strong>manager</strong> or <strong>user</strong> for other users listed on the project. To perform CRUD operations on Projects, Sites, Instruments and Variables, users must have appropriate role on the Project.
+To perform CRUD operation on either Channels and Templates, users must have role associated with each of the resources.</p>
+<section id="list-roles">
+<h3><strong>List Roles</strong><a class="headerlink" href="#list-roles" title="Link to this heading">¶</a></h3>
+<p>To get the list of user roles on a project, channel or template, the requesting(JWT) user must provide following three parameters:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p><strong>resource_type</strong> : project/channel/template</p></li>
+<li><p><strong>resource_id</strong>: project_id/channel_id/template_id</p></li>
+<li><p><strong>user</strong>: username for whom roles are to be checked</p></li>
+</ol>
+</div></blockquote>
+<p>In order to list the user roles on a resource (Project, Channel, Template) the requesting(JWT) user must have one of the three roles (admin, manager, user) on it.</p>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.list_roles(resource_id=&lt;resource_id&gt;, user=&lt;username&gt;,resource_type=&#39;project&#39;)
+$ t.streams.list_roles(resource_id=&lt;resource_id&gt;, user=&lt;username&gt;,resource_type=&#39;channel&#39;)
+$ t.streams.list_roles(resource_id=&lt;resource_id&gt;, user=&lt;username&gt;,resource_type=&#39;template&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token:$jwt&quot; {BASE_URL}/v3/streams/roles?user={userid}&amp;resource_type={project/channel/template}&amp;resource_id={project_id/channel_id/template_id}
+</pre></div>
+</div>
+<p>The response will look like the following with the Python Client:</p>
+<div class="foldable docutils container">
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>result: [&#39;admin&#39;]
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>There are three possible responses depending on if the requesting(JWT) user and user specified in query parameters are same or different.</p>
+<p>Case I: When requesting(JWT) user and user specified in the query parameters are same and both have role on the project/channel/template
+The result will include all the roles for the user in query parameters for the given resource_id</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Roles found&quot;</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;admin&quot;</span>
+<span class="p">],</span>
+<span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Case II: When requesting(JWT) user and user specified in the query parameters are different and JWT user does not have any role on the project/channel/template</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">   </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;User not authorized to access roles&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Case III: When requesting(JWT) user and user specified in the query parameters are different. JWT user has role on the project and user in query parameter does not have role on the project/channel/template</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">   </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Roles not found&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="grant-roles">
+<h3><strong>Grant Roles</strong><a class="headerlink" href="#grant-roles" title="Link to this heading">¶</a></h3>
+<p>Roles can be granted by Project/Channel/Template <em>admins</em> or <em>managers</em> so that users can perform CRUD operations on the Streams resources.</p>
+<p>Table 2 below shows that <em>admin</em> can grant any of the three roles to other users. Same or lower level permissions can be granted by <em>admins</em> and <em>managers</em>. Self role granting is not permitted.</p>
+<p>Managers can only grant <em>manager</em> and <em>user</em> to other users.</p>
+<p>Users do <strong>not</strong> have privileges to grant roles.</p>
+<ul class="simple">
+<li><p>Roles of the requesting(JWT) user are first checked by querying SK.</p></li>
+<li><p>If the username provided in the request body is the same as the JWT user, then self role granting is not permitted.</p></li>
+<li><p>If the JWT user and user provided in the request body are different, then existing roles for the username provided in the request body are retrieved and if the user already has the role, JWT user user is asking for no action is taken.</p></li>
+<li><p>If the role does not exist then JWT user roles are retrieved and compared with the rolename provided in the request body. Role is granted only if the JWT user has <strong>same</strong> or <strong>higher</strong> roles than the role name specified in the request body (<em>admin</em> role has highest rank, followed by <em>manager</em> and then <em>user</em>). Otherwise an error message saying, <em>User not authorized to grant role</em> is given in the response.</p></li>
+</ul>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Role</p></th>
+<th class="head"><p>Grant</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>admin</p></td>
+<td><p>admin, manager, user</p></td>
+</tr>
+<tr class="row-odd"><td><p>manager</p></td>
+<td><p>manager, user</p></td>
+</tr>
+<tr class="row-even"><td><p>user</p></td>
+<td><p>cannot grant roles</p></td>
+</tr>
+</tbody>
+</table>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.grant_role(resource_id=&lt;resource_id&gt;, user=&lt;user&gt;,resource_type=&#39;project/channel/template&#39;,role_name=&#39;admin/manager/user&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X POST -H &quot;X-Tapis-Token:$jwt&quot; {BASE_URL}/v3/streams/roles
+
+Request body: { &quot;user&quot;:&quot;user_id&quot;,
+               &quot;resource_type&quot;:&quot;project/channel/template&quot;,
+               &quot;resource_id&quot;:&quot;project_uuid/channel_id/template_id&quot;,
+               &quot;role_name&quot;: &quot;admin/manager/user&quot;
+              }
+</pre></div>
+</div>
+<p>The response will vary based on following cases:</p>
+<p>Case I: If the username provided in the request body is the same as the JWT user, then self role granting is not permitted.</p>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.grant_role(resource_id=&#39;test_proj&#39;, user=&#39;testuser2&#39;,resource_type=&#39;project&#39;,role_name=&#39;manager&#39;)
+</pre></div>
+</div>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cannot grant role for self&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">  </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Case II: If the JWT user and username provided in the request body are different, then existing roles for the username provided in the request body are retrieved and if the user already has the role JWT user user is asking for, no action is taken.</p>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.grant_role(resource_id=&#39;test_proj&#39;, user=&#39;testuser6&#39;,resource_type=&#39;project&#39;,role_name=&#39;manager&#39;)
+</pre></div>
+</div>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Role already exists&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">    </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;manager&quot;</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Case III: If the role does not exist then JWT user roles are retrieved and compared with the rolename provided in the request body. Role is granted only if the JWT user has <strong>same</strong> or <strong>higher*</strong> roles than the role name specified in the request body. Otherwise an error message saying, “User not authorized to grant role” is given in the response.</p>
+<p>For example testuser4 has <strong>*manager</strong> role on the project and the request is to grant testuser5 <strong>admin*</strong> role, then the request will not be fulfilled.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ t.streams.grant_role(resource_id=&#39;test_proj&#39;, user=&#39;testuser5&#39;,resource_type=&#39;project&#39;,role_name=&#39;admin&#39;)
+</pre></div>
+</div>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">   </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Role admin cannot be granted&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>If the requesting (JWT) user only has a <strong>user*</strong> role, then no role can be granted to other users, and the response will be following</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">   </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Role manager cannot be granted&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Case IV: If the requesting (JWT) user has no role on the project/channel/template, then the user is not authorized to grant any roles</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">   </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;User not authorized to grant role&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="revoke-roles">
+<h3><strong>Revoke Roles</strong><a class="headerlink" href="#revoke-roles" title="Link to this heading">¶</a></h3>
+<p>Users in <strong>admin</strong> role are capable of revoking any of the three roles: <strong>admin</strong>, <strong>manager</strong> and <strong>user</strong> for other users. Self role revoking is not permitted.
+Users in <em>manager</em> and <em>user</em> role are not capable of revoking roles.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Role</p></th>
+<th class="head"><p>Revoke</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>admin</p></td>
+<td><p>admin, manager, user</p></td>
+</tr>
+<tr class="row-odd"><td><p>manager</p></td>
+<td><p>Cannot revoke role</p></td>
+</tr>
+<tr class="row-even"><td><p>user</p></td>
+<td><p>Cannot revoke role</p></td>
+</tr>
+</tbody>
+</table>
+<p>With PySDK</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ permitted_client.streams.revoke_role(resource_id=&#39;test_proj&#39;, user=&#39;testuser6&#39;,resource_type=&#39;project&#39;,role_name=&#39;manager&#39;)
+</pre></div>
+</div>
+<p>With CURL:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ curl -X POST -H &quot;X-Tapis-Token:$jwt&quot; {BASE_URL}/v3/streams/revokeRole
+
+Request body: { &quot;user&quot;:&quot;user_id&quot;,
+               &quot;resource_type&quot;:&quot;project/channel/template&quot;,
+               &quot;resource_id&quot;:&quot;project_uuid/channel_id/template_id&quot;,
+               &quot;role_name&quot;: &quot;admin/manager/user&quot;
+              }
+</pre></div>
+</div>
+<p>The response will be following:</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Role manager successfully deleted for user testuser6&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Responses will vary based on following cases:</p>
+<p>Case I: If the requesting (JWT) user has a <strong>manager</strong> or <strong>user</strong> role</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">   </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;User not authorized to revoke role&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Case II: If the JWT user is trying to revoke self role</p>
+<div class="foldable docutils container">
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">   </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cannot delete role for self&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/tapis-project/source/technical/streams.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

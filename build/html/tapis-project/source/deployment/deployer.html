@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Tapis Deployer &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="tapis-deployer">
+<span id="deployer"></span><h1>Tapis Deployer<a class="headerlink" href="#tapis-deployer" title="Link to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This guide is for users wanting to deploy Tapis software in their own datacenter. Researchers who
+simply want to make use of the Tapis APIs do not need to deploy any Tapis components and can ignore
+this guide.</p>
+</div>
+<p>In this section, we cover using Tapis Deployer to generate Tapis deployment files. We cover how
+to get the Tapis deployer software, create configuration for your site using Ansible host_vars,
+and running the generate playbook. Then we describe using the control scripts (<code class="docutils literal notranslate"><span class="pre">burnup</span></code> and <code class="docutils literal notranslate"><span class="pre">burndown</span></code>)</p>
+<p>Keep in mind that the process of using Deployer involves the following high-level steps:</p>
+<ol class="arabic simple">
+<li><p>Check out the Tapis Deployer repository</p></li>
+<li><p>Provide some configuration for your site</p></li>
+<li><p>Run the generate script that will generate a set of “deployment files” that will be used to start and
+manage the running Tapis services. These deployment files should be checked into a git repository so that
+they can be versioned as the files are regenerated using newer versions of deployer.</p></li>
+<li><p>If necessary, check out the deployment files to the deployment
+environment (for example, the machine that has access to the Kubernetes API).</p></li>
+<li><p>Run deployment scripts to start/update the Tapis services.</p></li>
+</ol>
+<p>Steps 1, 2 and 3 can be performed on a separate machine from the deployment environment. Steps
+4 and 5 must be performed on a machine that has access to the Kubernetes API and the <code class="docutils literal notranslate"><span class="pre">kubectl</span></code>
+program where the Tapis services will be deployed.</p>
+<section id="installing-deployer">
+<h2>Installing Deployer<a class="headerlink" href="#installing-deployer" title="Link to this heading">¶</a></h2>
+<p>The Tapis Deployer project is hosted on GitHub. Use the
+<a class="reference external" href="https://github.com/tapis-project/tapis-deployer/tags">tags</a> download page to download a
+specific version of the Deployer software. For example, to get version 1.3.5 of the Deployer
+software, we could do the following in a terminal:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp"># </span>download<span class="w"> </span>the<span class="w"> </span>tar<span class="w"> </span>archive
+<span class="go">wget https://github.com/tapis-project/tapis-deployer/archive/refs/tags/tapis-deployer-1.3.1.tar.gz</span>
+
+<span class="gp"># </span>unpack<span class="w"> </span>the<span class="w"> </span>directory
+<span class="go">tar -xf tapis-deployer-1.3.1.tar.gz</span>
+
+<span class="gp"># </span>produces<span class="w"> </span>a<span class="w"> </span>new<span class="w"> </span>directory,<span class="w"> </span>tapis-deployer-1.3.5,<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>current<span class="w"> </span>working<span class="w"> </span>directory
+<span class="go">ls -l tapis-deployer-1.3.5</span>
+<span class="go">-rw-rw-r-- 1 jstubbs jstubbs 2340 Mar 22 10:13 CHANGELOG.md</span>
+<span class="go">drwxrwxr-x 3 jstubbs jstubbs 4096 Mar 22 10:13 inventory_example</span>
+<span class="go">drwxrwxr-x 3 jstubbs jstubbs 4096 Mar 22 10:13 playbooks</span>
+<span class="go">-rw-rw-r-- 1 jstubbs jstubbs 2014 Mar 22 10:13 README.md</span>
+</pre></div>
+</div>
+<p>Deployer is based on the Ansible project, and Ansible must be installed as well. For
+Debian/Ubuntu bases distributions, we recommend using the Ansible apt package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apt-get<span class="w"> </span>install<span class="w"> </span>ansible
+</pre></div>
+</div>
+<p>Refer to the official
+<a class="reference external" href="https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html">Ansible documentation</a>
+to get Ansible installed on your machine.</p>
+<section id="tapis-service-deployer-versions">
+<h3>Tapis Service &amp; Deployer Versions<a class="headerlink" href="#tapis-service-deployer-versions" title="Link to this heading">¶</a></h3>
+<p>All Tapis software, including all API components, programming language SDKs and libraries,
+deployment jobs and utilities, are versioned using semantic versioning. Tapis Deployer
+itself is versioned using semantic versions, and each version of Deployer is built to work
+with a specific set of Tapis service versions. For this reason, Deployer releases occur
+regularly.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>While it is technically possible to
+change the versions of the Tapis components that a specific version of Deployer deploys,
+this should be avoided. Any specific version of Deployer was tested with a specific
+set of Tapis software versions – trying to change the versions could result in errors.</p>
+</div>
+</section>
+</section>
+<section id="configuring-your-site">
+<h2>Configuring Your Site<a class="headerlink" href="#configuring-your-site" title="Link to this heading">¶</a></h2>
+<p>Deployer relies on a set of configuration files provided by you, the operator, to generate the
+deployment scripts for a given site. Configuring Deployer correctly can be challenging; to simplify
+the process, Deployer bundles a number of default configurations which are suitable for most
+but not all use cases. When planning a Tapis site deployment, be sure to review all required
+and optional configurations to ensure that your generated deployment scripts will be correct.</p>
+<p>There are two primary configuration files – the Inventory file and the Host Vars file –
+that must be provided to Tapis Deployer to generate the deployment scripts. Together
+with additional supporting files, such as the TLS certificate files for the site domain, these
+files are then used to deploy Tapis components to the Kubernetes cluster.</p>
+<section id="inventory-file">
+<h3>Inventory File<a class="headerlink" href="#inventory-file" title="Link to this heading">¶</a></h3>
+<p>The Tapis Deployer Inventory File is an Ansible inventory file specifying the main configuration
+file to use (called a “host vars” file) for each Tapis installation. Note that more than one
+Tapis installation can be specified in the inventory file.
+The inventory file also specifies the <code class="docutils literal notranslate"><span class="pre">tapisflavor</span></code>
+variable to use for each Tapis installation specified in the file. Currently, <code class="docutils literal notranslate"><span class="pre">tapisflavor</span></code>
+must be set to the value <code class="docutils literal notranslate"><span class="pre">kube</span></code> (for Kubernetes deployments), but a future version of
+Deployer will support additional types of deployment targets.</p>
+<p>Copy and past the following code snippet into a file and change the highlighted
+<code class="docutils literal notranslate"><span class="pre">&lt;tapis_installation_name&gt;</span></code> to a name for your Tapis installation, such as “Tapis-test” or
+“Tapis-prod”. Also, you can name the file anything you like, but a suitable name would be
+<code class="docutils literal notranslate"><span class="pre">tapis_installations.yml</span></code>.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="w"> </span><span class="nt">tapis_installs</span><span class="p">:</span>
+<span class="linenos">2</span><span class="w">   </span><span class="nt">hosts</span><span class="p">:</span>
+<span class="linenos">3</span><span class="w">    </span><span class="c1"># Replace with a name for your Tapis installation; for example, &quot;tapis-dev&quot;,</span>
+<span class="linenos">4</span><span class="w">    </span><span class="c1"># &quot;tapis-prod&quot;, etc. By default, Deployer uses this name for the directory</span>
+<span class="linenos">5</span><span class="w">    </span><span class="c1"># where it writes its output files, though this can be changed.</span>
+<span class="hll"><span class="linenos">6</span><span class="w">     </span><span class="nt">&lt;tapis_installation_name&gt;</span><span class="p">:</span>
+</span><span class="linenos">7</span><span class="w">       </span><span class="nt">ansible_connection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="linenos">8</span><span class="w">       </span><span class="nt">tapisflavor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube</span>
+<span class="linenos">9</span><span class="w">    </span><span class="c1"># Add additional installations here...</span>
+</pre></div>
+</div>
+</section>
+<section id="host-vars-file">
+<h3>Host Vars File<a class="headerlink" href="#host-vars-file" title="Link to this heading">¶</a></h3>
+<p>Create a directory called <code class="docutils literal notranslate"><span class="pre">host_vars</span></code> in the same directory as the inventory file, and
+inside the <code class="docutils literal notranslate"><span class="pre">host_vars</span></code> directory, create a file with the same name as the
+<code class="docutils literal notranslate"><span class="pre">&lt;tapis_installation_name&gt;</span></code> used in the inventory file above. The file
+structure should look similar to the following, where we are using the name <code class="docutils literal notranslate"><span class="pre">tapis-test.yml</span></code>
+for the <code class="docutils literal notranslate"><span class="pre">&lt;tapis_installation_name&gt;</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">tapis_installations.yml</span>
+<span class="go">host_vars/</span>
+<span class="go">  * tapis-test.yml</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;tapis_installation_name&gt;</span></code> will hold all of the configuration, in the form of
+variables and values in YAML format, for that Tapis installation. Broadly, there are
+required fields that every site administrator must provide and there are optional fields
+that can be provided if the defaults set in Deployer are not appropriate. Required and
+optional fields depend, to some extent, on whether a primary or associate site is being
+deployed.</p>
+<p>Below we include the required fields for both primary and associate sites as well as
+a few of the simplest optional fields that can be configured. The Advanced Configuration
+Options section goes into detail about additional advanced customizations that can be
+achieved.</p>
+</section>
+</section>
+<section id="required-fields-all-sites">
+<h2>Required Fields – All Sites<a class="headerlink" href="#required-fields-all-sites" title="Link to this heading">¶</a></h2>
+<p>The following fields must be configured in the Host Vars file for all sites, including
+associate sites and primary sites.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">global_tapis_domain</span></code> – Domain name for the site. Must be owned by the
+institution, resolvable by DNS to a public IP address in the site’s datacenter. See the
+<a class="reference external" href="preliminaries.html#environments-and-capacity-planning">Public IP Addresses, Domains and TLS Certificates</a>
+subsection of the Capacity Planning section for more details. Do not include “<a class="reference external" href="https://">https://</a>”
+at the beginning of the value.</p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global_tapis_domain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tapis.io</span>
+</pre></div>
+</div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global_tapis_domain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">develop.tapis.io</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">site_type</span></code> – Whether the site is a primary site or an associate site. The value of
+should be an integer: <code class="docutils literal notranslate"><span class="pre">1</span></code> for a primary site and <code class="docutils literal notranslate"><span class="pre">2</span></code> for an associate site.</p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">site_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">site_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">global_site_id</span></code> – The Tapis id for the site being deployed.
+Notes: for
+associate sites, the site id must be agreed to with the primary site prior to installation,
+and the associate site record must be added to the primary site’s site table.</p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global_site_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tacc</span>
+</pre></div>
+</div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global_site_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uh</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">global_storage_class</span></code> – The storage class, in the Kubernetes cluster, that can be used
+for creating persistent volumes. Options such as <code class="docutils literal notranslate"><span class="pre">rbd</span></code> (for Ceph-based storage), <code class="docutils literal notranslate"><span class="pre">nfs</span></code>,
+<code class="docutils literal notranslate"><span class="pre">cinder</span></code>, etc. may be appropriate. The value should be recognized on your Kubernetes cluster.</p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global_storage_class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rbd</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">global_primary_site_admin_tenant_base_url</span></code> – The URL to the admin tenant for the
+primary site associated with the site being deployed. If deploying a primary site, this
+is likely to have the value <code class="docutils literal notranslate"><span class="pre">https://admin.{{</span> <span class="pre">global_tapis_domain</span> <span class="pre">}}</span></code>; however, for
+associate sites, the value will use a different domain.</p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global_primary_site_admin_tenant_base_url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://admin.tapis.io</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">proxy_nginx_cert_file</span></code> – Path to the wildcard certificate file to be used for the site domain and all subdomains.
+Note that this path should be a valid path on the deployment machine, i.e., the machine where the Tapis
+Deployer output files will be used to deploy the Tapis components to Kubernetes. Note also that this file
+should contain the host certificate as well as the full CA chain.</p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">proxy_nginx_cert_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$HOME/ssl/star.tapis.io.pem</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">proxy_nginx_cert_key</span></code> – Path to the wildcard certificate key file to be used for the site domain and all subdomains.
+Note that, just as with <code class="docutils literal notranslate"><span class="pre">proxy_nginx_cert_file</span></code>, this path should be a valid path on the deployment machine,
+i.e., the machine where the Tapis
+Deployer output files will be used to deploy the Tapis components to Kubernetes.</p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">proxy_nginx_cert_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$HOME/ssl/star.tapis.io.key</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="optional-fields-all-sites">
+<h2>Optional Fields – All Sites<a class="headerlink" href="#optional-fields-all-sites" title="Link to this heading">¶</a></h2>
+<p>The following fields can optionally be provided in the Host Vars file.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">tapisdir</span></code> – The path on the local machine where Deployer will write the deployment script directory.</p>
+<p>Default Value: <code class="docutils literal notranslate"><span class="pre">$HOME/.tapis/{{</span> <span class="pre">inventory_name</span> <span class="pre">}}</span></code></p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tapisdir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/home/cic/deployments/tapis-test</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tapisdatadir</span></code> – The path on the local machine where Deployer &amp; Tapis scripts will write important stateful data.</p>
+<p>Default Value: <code class="docutils literal notranslate"><span class="pre">$HOME/.tapis-data/{{</span> <span class="pre">inventory_name</span> <span class="pre">}}</span></code></p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tapisdirdata</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/home/cic/deployments/tapis-test-data</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vault_raft_storage</span></code> – Whether to use Raft storage for Vault.</p>
+<p>Default Value: <code class="docutils literal notranslate"><span class="pre">true</span></code></p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">vault_raft_storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Using the <em>file</em> storage type for Vault is not considered viable for production environments. At
+the same time, changing the storage type from <em>file</em> to <em>Raft</em> requires a manual migration.
+Attempting to change the Tapis Vault with a different storage type without performing the manual
+migration could result in secret loss and permanent corruption of the Tapis installation.</p>
+</div>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">skadmin_sk_privileged_sa</span></code> – The name of a service account to use when deploying certain
+Tapis components. If specified, this service account should have sufficient privileges to create
+and manage various Kubernetes API objects, including: jobs, pods, PVCs, and secrets. If this variable
+is not set, then no value will be specified for the <code class="docutils literal notranslate"><span class="pre">serviceAccountName</span></code> attribute and Kubernetes
+will fall back to using the  <code class="docutils literal notranslate"><span class="pre">default</span></code> service account (in which case the default account must have
+sufficient privileges to create and manage the Tapis Kubernetes objects).</p>
+<p>Default Value: None (the value of <code class="docutils literal notranslate"><span class="pre">default</span></code> is supplied by Kuberentes).</p>
+<p>Examples:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">skadmin_sk_privileged_sa</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tapis-manager</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="generating-the-tapis-deployment-script-directory">
+<h2>Generating the Tapis Deployment Script Directory<a class="headerlink" href="#generating-the-tapis-deployment-script-directory" title="Link to this heading">¶</a></h2>
+<p>Once the Tapis Deployer software and dependencies have been installed and the
+inventory and host vars files written, the Tapis deployment script directory can be generated.
+The deployment script directory contains the actual deployment scripts that will be used to
+deploy and manage Tapis components. Tapis Deployer will write the deployment scripts to the <code class="docutils literal notranslate"><span class="pre">tapisdir</span></code>
+path, which can optionally be set in the Host Vars file (see previous section).</p>
+<p>Generate the Tapis deployment scripts directory using the following command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ansible-playbook -i /path/to/inventory_file.yml /path/to/deployer/playbooks/generate.yml</span>
+</pre></div>
+</div>
+<p>For example, given a project structure like the following, with the Tapis Deployer
+installation in the same directory as the inventory file and host vars directory:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">tapis_installations.yml</span>
+<span class="go">tapis-deployer-1.3.1/</span>
+<span class="go">  * CHANGELOG.md</span>
+<span class="go">  * playbooks/</span>
+<span class="go">  * inventory_example/</span>
+<span class="go">  * README.md</span>
+<span class="go">host_vars/</span>
+<span class="go">  * &lt;tapis_installation_name&gt;</span>
+</pre></div>
+</div>
+<p>we can execute the following command from within the project root directory to generate
+the Tapis deployment script directory:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ansible-playbook -i tapis_installations.yml tapis-deployer-1.3.1/playbooks/generate.yml</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When executing <cite>ansible-playbook</cite>, all Tapis installations defined in the inventory
+file will be generated. Use <code class="docutils literal notranslate"><span class="pre">-l</span> <span class="pre">&lt;tapis_installation_name&gt;</span></code> to only generate one installation.</p>
+</div>
+<p>Generating the deployment script directory takes quite a bit of some time. If you just need to
+generate (or regenerate) one directory within the deployment script directory, you can
+issue the following:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ansible-playbook -i /path/to/inventory_file.yml /path/to/deployer/playbooks/generate-single-component.yml -e comp=&lt;component&gt;</span>
+</pre></div>
+</div>
+<p>For example, with the same file structure as above, we could regenerate just the <cite>workflows</cite> directory using:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ansible-playbook -i tapis_installations.yml tapis-deployer-1.3.1/playbooks/generate-single-component.yml -e comp=workflows</span>
+</pre></div>
+</div>
+</section>
+<section id="deployment-script-directory-structure">
+<h2>Deployment Script Directory Structure<a class="headerlink" href="#deployment-script-directory-structure" title="Link to this heading">¶</a></h2>
+<p>The deployment script directory is structured as follows:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">actors/   # the Actors component</span>
+<span class="go">  burnup</span>
+<span class="go">  burndown</span>
+<span class="gp">  # </span>k8s<span class="w"> </span>.yml<span class="w"> </span>files<span class="w"> </span><span class="k">for</span><span class="w"> </span>actors...
+
+<span class="go">admin/   # the admin component, not a Tapis service</span>
+<span class="go">  backup/</span>
+<span class="gp">  # </span>.<span class="w"> </span>.<span class="w"> </span>.
+<span class="go">  verification/</span>
+
+<span class="go">apps/   # the Apps component</span>
+<span class="go">  burnup</span>
+<span class="go">  burndown</span>
+<span class="gp">  # </span>k8s<span class="w"> </span>.yml<span class="w"> </span>files<span class="w"> </span>apps...
+
+<span class="gp"># </span>...<span class="w"> </span>additional<span class="w"> </span>component<span class="w"> </span>directories<span class="w"> </span>...
+
+<span class="go">burnup     # top-level burnup script</span>
+<span class="go">burndown   # top-level burndown script</span>
+
+<span class="gp"># </span>...<span class="w"> </span>additional<span class="w"> </span>component<span class="w"> </span>directories<span class="w"> </span>...
+</pre></div>
+</div>
+<p>At the top level, there is a directory for every Tapis <em>component</em> that will be deployed. Note that most
+components are Tapis services, such as Actors and Apps, but some components, such as <code class="docutils literal notranslate"><span class="pre">admin</span></code>, <code class="docutils literal notranslate"><span class="pre">skadmin</span></code>
+and <code class="docutils literal notranslate"><span class="pre">vault</span></code> are not Tapis services but are instead components needed to make the deployment work.</p>
+<p>Except for <code class="docutils literal notranslate"><span class="pre">admin</span></code>, each component contains a <code class="docutils literal notranslate"><span class="pre">burnup</span></code> and <code class="docutils literal notranslate"><span class="pre">burndown</span></code> script, together with some yaml
+files for defining the Kuberentes objects. The <code class="docutils literal notranslate"><span class="pre">burnup</span></code> BASH script is a convenience utility for creating
+the Kuberentes objects while the <code class="docutils literal notranslate"><span class="pre">burndown</span></code> script can be used to remove the objects. Similarly,
+there is a top-level <code class="docutils literal notranslate"><span class="pre">burnup</span></code> and <code class="docutils literal notranslate"><span class="pre">burndown</span></code> script to create/remove all the Tapis objects. The top-level
+scripts call the individual component <code class="docutils literal notranslate"><span class="pre">burnup``and</span> <span class="pre">``burndown</span></code> scripts, respectively.</p>
+</section>
+<section id="using-the-deployer-control-scripts">
+<h2>Using the Deployer Control Scripts<a class="headerlink" href="#using-the-deployer-control-scripts" title="Link to this heading">¶</a></h2>
+<p>As mentioned above, the deployment script directory contains bash scripts called <code class="docutils literal notranslate"><span class="pre">burnup</span></code>
+and <code class="docutils literal notranslate"><span class="pre">burndown</span></code>, referred to as
+the Deployer control scripts. These scripts provided convenience functions for managing entire sets of
+Tapis components at once.  Deploying Tapis using the control scripts involves a three step process:</p>
+<ol class="arabic simple">
+<li><p>Initialize the Tapis Deployment</p></li>
+<li><p>Deploy the Primary Tapis Services</p></li>
+<li><p>Deploy the Secondary Tapis Services</p></li>
+</ol>
+<p>We detail each step in the following subsections.
+We recommend proceeding in this order, ensuring that each step finishes to completion and verify that
+it works before moving onto the next step.</p>
+</section>
+<section id="initialize-the-tapis-deployment">
+<h2>Initialize the Tapis Deployment<a class="headerlink" href="#initialize-the-tapis-deployment" title="Link to this heading">¶</a></h2>
+<p>Start by creating the initial Kubernetes objects:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./burnup init</span>
+</pre></div>
+</div>
+<p>You will see a lot of outputs written to the screen. Kubernetes is a declarative system, where API calls
+are used to describe the <em>desired</em> state on the cluster and Kubernetes works to make the <em>actual</em> state
+converge to the desired state. In general there is no problem with re-running a control script step more
+than once, because we are simply re-declaring the desired state to be the same state we declared
+previously. As a result, you can see messages such as:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">service/apps-api unchanged</span>
+</pre></div>
+</div>
+<p>This just means the command did not change anything about the desired state so Kuberentes made no update.</p>
+<p>Also, it is quite normal to see Error messages indicating that some Kuberentes object was not found;
+for example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Error from server (NotFound): secrets &quot;vault-keys&quot; not found</span>
+</pre></div>
+</div>
+<p>This could mean that one Kuberentes object definition references another object definition that has yet
+to finish creating.</p>
+<p>Finally, you may see related errors such as:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Error from server (AlreadyExists): secrets &quot;vault-token&quot; already exists</span>
+</pre></div>
+</div>
+<p>Before moving onto the next step, we should validate that the initial objects all completed.
+Using <code class="docutils literal notranslate"><span class="pre">kubectl</span></code> we should check the output of the following commands:</p>
+<p>Check the services:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">kubectl get services</span>
+<span class="go">NAME                               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)</span>
+<span class="go">actors-admin                       ClusterIP   10.105.126.200   &lt;none&gt;        5000/TCP</span>
+<span class="go">actors-events                      ClusterIP   10.110.114.165   &lt;none&gt;        5000/TCP</span>
+<span class="go">actors-grafana                     ClusterIP   10.105.16.173    &lt;none&gt;        3000/TCP</span>
+<span class="go">actors-mes                         ClusterIP   10.96.160.55     &lt;none&gt;        5000/TCP</span>
+<span class="go">actors-metrics                     ClusterIP   10.99.139.105    &lt;none&gt;        5000/TCP</span>
+<span class="go">actors-mongo                       NodePort    10.103.92.102    &lt;none&gt;        27017:32340/TCP</span>
+<span class="go">actors-nginx                       NodePort    10.111.143.102   &lt;none&gt;        80:31633/TCP</span>
+<span class="go">actors-prometheus                  ClusterIP   10.109.2.194     &lt;none&gt;        9090/TCP</span>
+<span class="go">actors-rabbit                      NodePort    10.106.132.99    &lt;none&gt;        5672:31108/TCP</span>
+<span class="go">actors-rabbit-dash                 ClusterIP   10.105.199.16    &lt;none&gt;        15672/TCP</span>
+<span class="go">actors-reg                         ClusterIP   10.107.149.161   &lt;none&gt;        5000/TCP</span>
+<span class="go">apps-api                           NodePort    10.110.168.192   &lt;none&gt;        8080:32718/TCP</span>
+<span class="go">apps-api-debug                     NodePort    10.100.5.250     &lt;none&gt;        8000:30225/TCP</span>
+<span class="go">apps-pgadmin                       NodePort    10.102.221.245   &lt;none&gt;        80:31458/TCP</span>
+<span class="go">apps-postgres                      ClusterIP   10.104.211.25    &lt;none&gt;        5432/TCP</span>
+<span class="go">authenticator-api                  NodePort    10.97.35.247     &lt;none&gt;        5000:31167/TCP</span>
+<span class="go">authenticator-ldap                 ClusterIP   10.97.243.117    &lt;none&gt;        389/TCP</span>
+<span class="go">authenticator-postgres             ClusterIP   10.107.198.0     &lt;none&gt;        5432/TCP</span>
+<span class="go">chords-app                         NodePort    10.109.154.215   &lt;none&gt;        80:30156/TCP</span>
+<span class="go">chords-influxdb2                   ClusterIP   10.100.107.154   &lt;none&gt;        8086/TCP,8083/TCP</span>
+<span class="go">chords-mysql                       ClusterIP   10.111.198.225   &lt;none&gt;        3306/TCP</span>
+<span class="go">files-api                          NodePort    10.101.53.166    &lt;none&gt;        8080:31557/TCP</span>
+<span class="go">files-debug                        NodePort    10.107.253.44    &lt;none&gt;        8000:32367/TCP</span>
+<span class="go">files-postgres                     ClusterIP   10.107.1.254     &lt;none&gt;        5432/TCP</span>
+<span class="go">files-rabbitmq                     ClusterIP   10.110.250.244   &lt;none&gt;        5672/TCP</span>
+<span class="go">globus-proxy                       ClusterIP   10.96.141.179    &lt;none&gt;        5000/TCP</span>
+<span class="go">jobs-api                           NodePort    10.110.93.52     &lt;none&gt;        8080:30577/TCP</span>
+<span class="go">jobs-api-debug                     NodePort    10.100.250.144   &lt;none&gt;        8000:30813/TCP</span>
+<span class="go">jobs-api-other                     NodePort    10.102.208.122   &lt;none&gt;        6157:30078/TCP</span>
+<span class="go">jobs-api-ssl                       NodePort    10.105.51.28     &lt;none&gt;        8443:32513/TCP</span>
+<span class="go">jobs-pgadmin                       NodePort    10.102.30.118    &lt;none&gt;        80:31786/TCP</span>
+<span class="go">jobs-postgres                      ClusterIP   10.104.52.113    &lt;none&gt;        5432/TCP</span>
+<span class="go">jobs-rabbitmq                      ClusterIP   10.105.69.98     &lt;none&gt;        5672/TCP,15672/TCP</span>
+<span class="go">jobs-rabbitmq-mgmt                 NodePort    10.101.83.72     &lt;none&gt;        15672:30985/TCP</span>
+<span class="go">monitoring-exporter                NodePort    10.104.19.250    &lt;none&gt;        8000:32311/TCP</span>
+<span class="go">monitoring-grafana                 NodePort    10.105.48.54     &lt;none&gt;        3000:32088/TCP</span>
+<span class="go">monitoring-prometheus              NodePort    10.101.27.134    &lt;none&gt;        9090:32204/TCP</span>
+<span class="go">notifications-api                  NodePort    10.111.161.227   &lt;none&gt;        8080:31399/TCP</span>
+<span class="go">notifications-pgadmin              NodePort    10.96.236.253    &lt;none&gt;        80:31703/TCP</span>
+<span class="go">notifications-postgres             ClusterIP   10.99.47.18      &lt;none&gt;        5432/TCP</span>
+<span class="go">notifications-rabbitmq             ClusterIP   10.107.233.223   &lt;none&gt;        5672/TCP,15672/TCP</span>
+<span class="go">notifications-rabbitmq-mgmt        NodePort    10.104.109.239   &lt;none&gt;        15672:32511/TCP</span>
+<span class="go">pgrest-api                         NodePort    10.107.91.195    &lt;none&gt;        5000:30084/TCP</span>
+<span class="go">pgrest-postgres                    ClusterIP   10.101.255.95    &lt;none&gt;        5432/TCP</span>
+<span class="go">pgrest-postgres-nodeport           NodePort    10.103.193.222   &lt;none&gt;        5432:30525/TCP</span>
+<span class="go">pods-api                           ClusterIP   10.106.237.143   &lt;none&gt;        8000/TCP</span>
+<span class="go">pods-postgres                      NodePort    10.100.171.106   &lt;none&gt;        5432:31128/TCP</span>
+<span class="go">pods-rabbitmq                      ClusterIP   10.111.198.30    &lt;none&gt;        5672/TCP</span>
+<span class="go">pods-rabbitmq-dash                 NodePort    10.111.90.160    &lt;none&gt;        15672:30061/TCP</span>
+<span class="go">pods-traefik                       ClusterIP   10.111.26.233    &lt;none&gt;        80/TCP</span>
+<span class="go">pods-traefik-dash                  NodePort    10.105.118.198   &lt;none&gt;        8080:30146/TCP</span>
+<span class="go">registry                           NodePort    10.97.98.114     &lt;none&gt;        5000:31275/TCP</span>
+<span class="go">restheart                          ClusterIP   10.107.197.65    &lt;none&gt;        8080/TCP</span>
+<span class="go">restheart-debug                    NodePort    10.103.14.131    &lt;none&gt;        8080:32023/TCP</span>
+<span class="go">restheart-mongo                    NodePort    10.109.224.10    &lt;none&gt;        27017:31792/TCP</span>
+<span class="go">restheart-security                 NodePort    10.105.16.196    &lt;none&gt;        8080:30792/TCP</span>
+<span class="go">site-router-api                    NodePort    10.102.33.197    &lt;none&gt;        8000:30063/TCP</span>
+<span class="go">sk-api                             NodePort    10.107.235.138   &lt;none&gt;        8080:31645/TCP</span>
+<span class="go">sk-api-debug                       NodePort    10.106.88.188    &lt;none&gt;        8000:31797/TCP</span>
+<span class="go">sk-api-other                       NodePort    10.105.105.97    &lt;none&gt;        6157:31086/TCP</span>
+<span class="go">sk-api-ssl                         NodePort    10.99.148.218    &lt;none&gt;        8443:30128/TCP</span>
+<span class="go">sk-pgadmin                         NodePort    10.101.207.66    &lt;none&gt;        80:30046/TCP</span>
+<span class="go">sk-postgres                        ClusterIP   10.96.73.92      &lt;none&gt;        5432/TCP</span>
+<span class="go">streams-api                        NodePort    10.98.10.161     &lt;none&gt;        5000:30552/TCP</span>
+<span class="go">systems-api                        NodePort    10.108.23.253    &lt;none&gt;        8080:32072/TCP</span>
+<span class="go">systems-api-debug                  NodePort    10.97.231.157    &lt;none&gt;        8000:31973/TCP</span>
+<span class="go">systems-pgadmin                    NodePort    10.108.234.139   &lt;none&gt;        80:30892/TCP</span>
+<span class="go">systems-postgres                   ClusterIP   10.101.21.137    &lt;none&gt;        5432/TCP</span>
+<span class="go">tapis-nginx                        NodePort    10.107.224.176   &lt;none&gt;        80:30175/TCP,443:31864/TCP</span>
+<span class="go">tapisui-service                    NodePort    10.107.80.97     &lt;none&gt;        3000:31766/TCP</span>
+<span class="go">tenants-api                        NodePort    10.109.125.21    &lt;none&gt;        5000:31327/TCP</span>
+<span class="go">tenants-postgres                   ClusterIP   10.102.182.23    &lt;none&gt;        5432/TCP</span>
+<span class="go">tokens-api                         NodePort    10.110.229.6     &lt;none&gt;        5000:32706/TCP</span>
+<span class="go">vault                              ClusterIP   10.101.97.112    &lt;none&gt;        8200/TCP</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> The number of services will depend on the site type being deployed.</p>
+<p>Check the PVCs:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">kubectl get pvc</span>
+<span class="go">NAME                           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE</span>
+<span class="go">actors-mongo-backup-vol01      Bound    pvc-fbb44e18-0256-4d0b-b799-a703b0f477b6   10Gi       RWO            rbd-new        8h</span>
+<span class="go">actors-mongo-vol01             Bound    pvc-d3c224eb-5930-4700-8b8a-5f1ae0f2a921   40Gi       RWO            rbd-new        8h</span>
+<span class="go">actors-rabbitmq-vol01          Bound    pvc-20dc6e04-e2bb-48b6-8647-ee28081eb0c3   20Gi       RWO            rbd-new        6h19m</span>
+<span class="go">apps-postgres-vol01            Bound    pvc-f1320b94-6069-41d3-a26a-91a3ebaaed21   20Gi       RWO            rbd-new        8h</span>
+<span class="go">authenticator-ldap-vol01       Bound    pvc-05ae6dbb-e46d-4383-af6b-f1d2726d6529   10Gi       RWO            rbd-new        4d4h</span>
+<span class="go">authenticator-postgres-vol01   Bound    pvc-4fa4b8b4-dd31-42f6-afcf-d3fe41eeb723   20Gi       RWO            rbd-new        4d4h</span>
+<span class="go">files-pgdata                   Bound    pvc-8c9b4e7b-feee-4823-96e2-ebe5631cd4ca   10Gi       RWO            rbd-new        8h</span>
+<span class="go">files-rabbitmq-data            Bound    pvc-0f060f7b-53a7-41e5-ae4a-4dcbdcf47eb1   10Gi       RWO            rbd-new        8h</span>
+<span class="go">jobs-postgres-vol01            Bound    pvc-62f74888-028c-4e5f-99c4-a3dd1f16881c   20Gi       RWO            rbd-new        8h</span>
+<span class="go">jobs-rabbitmq-vol01            Bound    pvc-08f6c91c-8797-4515-b6c7-28fb839fc1c2   10Gi       RWO            rbd-new        8h</span>
+<span class="go">notifications-postgres-vol01   Bound    pvc-d1a662de-60fc-4ead-a8c2-a84e4d302b2e   20Gi       RWO            rbd-new        8h</span>
+<span class="go">notifications-rabbitmq-vol01   Bound    pvc-e96e2d73-fe46-4e53-831e-48342715ae72   10Gi       RWO            rbd-new        8h</span>
+<span class="go">site-router-redis-vol01        Bound    pvc-dab2fdc8-d8e1-461a-902b-7f76026a278a   20Gi       RWO            rbd-new        4d4h</span>
+<span class="go">sk-postgres-vol01              Bound    pvc-e304ca96-143a-41e6-901f-b61d14590972   20Gi       RWO            rbd-new        4d4h</span>
+<span class="go">systems-postgres-vol01         Bound    pvc-14e58e3b-876e-4598-b9c2-a31447d3b530   20Gi       RWO            rbd-new        8h</span>
+<span class="go">tenants-postgres-vol01         Bound    pvc-65b83d4e-24a4-42cb-ae9f-5fce41109d4a   20Gi       RWO            rbd-new        4d4h</span>
+<span class="go">vault-vol01                    Bound    pvc-f39851c4-e140-4634-a4e4-441a5b143fd6   10Gi       RWO            rbd-new        4d4h</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> The number of PVCs will depend on the site type being deployed.</p>
+<p>Check the jobs:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">kubectl get jobs</span>
+<span class="go">NAME              COMPLETIONS   DURATION   AGE</span>
+<span class="go">renew-sk-secret   1/1           4s         30m</span>
+<span class="go">sk-admin-init     1/1           19s        30m</span>
+<span class="go">sk-presetup       1/1           3s         30m</span>
+</pre></div>
+</div>
+<p>Check the pods:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">kubectl get pods</span>
+
+<span class="go">NAME                              READY   STATUS             RESTARTS   AGE</span>
+<span class="go">renew-sk-secret-zz8lm             0/1     Completed          0          2m33s</span>
+<span class="go">site-router-api-784ddbbcc-c456m   1/2     CrashLoopBackOff   4          2m46s</span>
+<span class="go">sk-admin-init-gpnnq               0/1     Completed          0          2m29s</span>
+<span class="go">sk-presetup-nk8ht                 0/1     Completed          0          2m32s</span>
+<span class="go">tapis-nginx-55d47656f8-tvhfk      1/1     Running            0          2m48s</span>
+<span class="go">vault-67b44ff777-vwphn            1/1     Running            0          2m45s</span>
+</pre></div>
+</div>
+<p>It is expected that the site-router will be in CrashLoopBackOff state; this will automatically
+resolve once the primary services are deployed in the next step.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Quickly check that the initialization step compelted and move onto the next step.
+You have about 10 minutes to deploy the primary services (the topic of the next section)
+after the initialization. This is because a short-lived token for the Vault database is
+generated in this step and used in the next step.</p>
+</div>
+</section>
+<section id="deploy-the-primary-tapis-services">
+<h2>Deploy the Primary Tapis services<a class="headerlink" href="#deploy-the-primary-tapis-services" title="Link to this heading">¶</a></h2>
+<p>Next, deploy the primary Tapis services:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./burnup primary_services</span>
+</pre></div>
+</div>
+<p>Similarly to the messages discussed in the Tapis initialization section, it is quite normal to
+see some messages like</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">error: timed out waiting for the condition on jobs/authenticator-migrations</span>
+</pre></div>
+</div>
+<p>Condition timeouts can happen when it is taking longer for Kubernetes to complete the deloyment of
+dependent objects, but these should resolve in due time. It is also quite normal to see sets of
+pods where the first several are in <code class="docutils literal notranslate"><span class="pre">Error</span></code> state while the last one <code class="docutils literal notranslate"><span class="pre">Completed</span></code>,
+for example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">notifications-init-db-25dk8                 0/1     Error              0          109s</span>
+<span class="go">notifications-init-db-gq4lt                 0/1     Completed          0          97s</span>
+<span class="go">notifications-init-db-zqhvt                 0/1     Error              0          107s</span>
+</pre></div>
+</div>
+<p>The errors above are normal and could be caused for different reasons, but all of them amount to essentially
+the same thing: one or more of the Kubernetes objects that the pod depends on where not ready when the pod
+was launched, do the pod crashed, hence the <code class="docutils literal notranslate"><span class="pre">Error</span></code> final state. Kubernetes continued to start a new
+instance of the pod until it finally reached the <code class="docutils literal notranslate"><span class="pre">Completed</span></code> state when all of the dependent objects where
+ready.</p>
+<p>It could could several minutes (10 or 20 even) for the deployment to converge. Check that eventually
+there are no pods in CrashLoopBackOff using:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">kubectl get pods</span>
+</pre></div>
+</div>
+<p>Then, check that a few critical services are healthy using the verification scripts:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd admin/verification</span>
+</pre></div>
+</div>
+<p>Check that the Security Kernel is health (your output should be simialr that below):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./sk-test</span>
+<span class="go">hello</span>
+<span class="go">{&quot;result&quot;:&quot;Hello from the Tapis Security Kernel.&quot;,&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;TAPIS_FOUND hello found: 0 items&quot;,&quot;version&quot;:&quot;1.3.0&quot;,&quot;commit&quot;:&quot;ee1b3342&quot;,&quot;build&quot;:&quot;2023-03-01T15:42:55Z&quot;,&quot;metadata&quot;:null}</span>
+<span class="go">ready</span>
+<span class="go">{&quot;result&quot;:{&quot;checkNum&quot;:1,&quot;databaseAccess&quot;:true,&quot;vaultAccess&quot;:true,&quot;tenantsAccess&quot;:true},&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;TAPIS_READY Readiness check received by Security Kernel.&quot;,&quot;version&quot;:&quot;1.3.0&quot;,&quot;commit&quot;:&quot;ee1b3342&quot;,&quot;build&quot;:&quot;2023-03-01T15:42:55Z&quot;,&quot;metadata&quot;:null}</span>
+<span class="go">healthcheck</span>
+<span class="go">{&quot;result&quot;:{&quot;checkNum&quot;:1,&quot;databaseAccess&quot;:true,&quot;vaultAccess&quot;:true,&quot;tenantsAccess&quot;:true},&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;TAPIS_HEALTHY Health check received by Security Kernel.&quot;,&quot;version&quot;:&quot;1.3.0&quot;,&quot;commit&quot;:&quot;ee1b3342&quot;,&quot;build&quot;:&quot;2023-03-01T15:42:55Z&quot;,&quot;metadata&quot;:null}</span>
+</pre></div>
+</div>
+<p>Check that the Tenants service is healthy:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tenants-test</span>
+<span class="go">{</span>
+<span class="go">  &quot;message&quot;: &quot;Tenants retrieved successfully.&quot;,</span>
+<span class="go">  &quot;metadata&quot;: {},</span>
+<span class="go">  &quot;result&quot;: [</span>
+<span class="go">    {</span>
+<span class="go">      &quot;admin_user&quot;: &quot;admin&quot;,</span>
+<span class="go">      &quot;authenticator&quot;: &quot;https://admin.test.tapis.io/v3/oauth2&quot;,</span>
+<span class="go">. . .</span>
+</pre></div>
+</div>
+<p>Check that the Tokens service is healthy:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tokens-test</span>
+<span class="go">{&quot;message&quot;:&quot;Token generation successful.&quot;,&quot;metadata&quot;:{},&quot;result&quot;:{&quot;access_token&quot; . . .</span>
+<span class="go">. . .</span>
+</pre></div>
+</div>
+<p>Check that the Authenticator service is healthy:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./authenticator-test</span>
+<span class="go">{&quot;message&quot;:&quot;Token created successfully.&quot;,&quot;metadata&quot;:{},&quot;result&quot;:{&quot;access_token&quot;: . . .</span>
+<span class="go">. . .</span>
+</pre></div>
+</div>
+</section>
+<section id="deploy-the-secondary-tapis-services">
+<h2>Deploy the Secondary Tapis Services<a class="headerlink" href="#deploy-the-secondary-tapis-services" title="Link to this heading">¶</a></h2>
+<p>Finally, deploy the secondary Tapis services:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./burnup secondary_services</span>
+</pre></div>
+</div>
+<section id="bootstrapping-an-initial-primary-site-deployment">
+<h3>Bootstrapping an Initial Primary Site Deployment<a class="headerlink" href="#bootstrapping-an-initial-primary-site-deployment" title="Link to this heading">¶</a></h3>
+</section>
+<section id="bootstrapping-an-initial-associate-site-deployment">
+<h3>Bootstrapping an Initial Associate Site Deployment<a class="headerlink" href="#bootstrapping-an-initial-associate-site-deployment" title="Link to this heading">¶</a></h3>
+</section>
+</section>
+<section id="configuring-support-for-globus">
+<h2>Configuring Support for GLOBUS<a class="headerlink" href="#configuring-support-for-globus" title="Link to this heading">¶</a></h2>
+<p>In order for a primary or associate site to support Tapis systems of type GLOBUS, a Globus project must be
+created and registered. This yields a Globus client ID that must be configured as part of the Tapis environment.
+For more information on creating a Globus project, please see the
+<a class="reference external" href="https://docs.globus.org/api/auth/developer-guide">Globus Auth Developer Guide</a>.
+Each Tapis installation can be configured with it’s own Globus client ID.</p>
+<p>The resulting client ID must be set in the host_vars file using the field <code class="docutils literal notranslate"><span class="pre">systems_globus_client_id</span></code>.
+This field is referenced as part of the deployment for the Systems and Files services. This is done by adding lines
+similar to the following to the host_vars file:</p>
+<blockquote>
+<div><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Globus client ID for systems and files</span>
+<span class="nt">systems_globus_client_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">868c331e-ab77-4321-bd12-9c85cb0f12aa</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>To use Globus, an end-user will create a system in Tapis and follow an authentication flow to
+register credentials for the system. The Tapis client application uses the Globus OAuth2 Native App
+flow to obtain the initial access and refresh tokens for the end-user. Globus’s support for the PKCE
+protocol is used to perform a three-legged OAuth2 authorization code grant.</p>
+<p>For more information, please see Systems
+<a class="reference external" href="https://tapis.readthedocs.io/en/latest/technical/systems.html#support-for-globus">Support For Globus</a>.</p>
+</section>
+<section id="advanced-configuration-options">
+<h2>Advanced Configuration Options<a class="headerlink" href="#advanced-configuration-options" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Replacing the Vault with an “external” Vault</p></li>
+<li><p>Customizing routing in Tapis proxy</p></li>
+<li><p>Configuring custom LDAP servers</p></li>
+<li><p>Adding custom (i.e., external) authenticators</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/tapis-project/source/deployment/deployer.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Estimating walltime to execute “calc_e.py” with given configurations for application: Calculating Euler’s number &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="estimating-walltime-to-execute-calc-e-py-with-given-configurations-for-application-calculating-euler-s-number">
+<h1>Estimating walltime to execute “calc_e.py” with given configurations for application: Calculating Euler’s number<a class="headerlink" href="#estimating-walltime-to-execute-calc-e-py-with-given-configurations-for-application-calculating-euler-s-number" title="Link to this heading">¶</a></h1>
+<p><strong>This code is from “https://github.com/CODARcode/cheetah”</strong></p>
+<p>To demonstrate the usage of HARP with Cheetah, we will look at a simple Python3 script that calculates Euler’s number (<code class="docutils literal notranslate"><span class="pre">e</span></code>) using two different methods. It takes three positional arguments: the first is a string describing which of the methods to use, the second is a parameter to the calculation method that describes how many iterations or how precise to try to make the calculation (meaning depends on the method), and the third is a precision to use with the standard library Decimal module in python. If the third argument is not specified, built-in floating point is used instead.</p>
+<section id="the-application">
+<h2>The application<a class="headerlink" href="#the-application" title="Link to this heading">¶</a></h2>
+<p>The source code is contained in a single source file: <a class="reference download internal" download="" href="../../../_downloads/cab5b358a99ffe7b18aeb1a23ed9854b/calc_e.py"><span class="xref download myst">calc_e.py</span></a>.
+There are no dependencies other than python3.</p>
+</section>
+</section>
+<section id="how-to-use-harp-to-estimate-the-walltime-for-the-program-calc-e-py">
+<h1>How to use HARP to estimate the walltime for the program calc_e.py?<a class="headerlink" href="#how-to-use-harp-to-estimate-the-walltime-for-the-program-calc-e-py" title="Link to this heading">¶</a></h1>
+<p>The current folder ‘01-eulers_number’ is called target application folder.</p>
+<ol class="arabic">
+<li><p>Navigate to the target application folder and copy the all the files from /Post_Execution_Scripts/basic into the the current folder. For more details about the type of application categories and profiling, please read the document or PPT .</p></li>
+<li><p>Edit the paths in “post_script.sh” to point to this folder (the target application folder).</p></li>
+<li><p>Edit the following files before applying the HARP framework to the application</p>
+<ul class="simple">
+<li><p>If running the pipeline on OSC, set the OSC project account in the campaign files “<em><em>campaign</em></em>.py”. Ignore otherwise.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="k">class</span> <span class="nc">GrayScott</span><span class="p">(</span><span class="n">Campaign</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="n">scheduler_options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;owens_gpu&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;project&#39;</span><span class="p">:</span><span class="s1">&#39;&lt;OSC-Project-Account&gt;&#39;</span><span class="p">}}</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Adjust the paths for the <strong>cheetah_app_directory</strong> and ((cheetah_campaign_file** keys in pipeline_config.json file to pointto the current directory.</p></li>
+</ul>
+</li>
+<li><p>Run the following commands to set/check the environment to run HARP framework</p>
+<ul class="simple">
+<li><p>To load the module and set the environment on <strong>OSC</strong> (either in the command line mode or in the sbatch script)</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>use<span class="w"> </span><span class="nv">$HOME</span>/osc_apps/lmodfiles
+module<span class="w"> </span>load<span class="w"> </span>harp<span class="w"> </span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CONDA_HOME</span><span class="o">=</span>&lt;path-to-conda-install&gt;/miniconda3
+<span class="nb">source</span><span class="w"> </span><span class="nv">$CONDA_HOME</span>/bin/activate
+<span class="nb">source</span><span class="w"> </span>activate<span class="w"> </span>harp_env
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>For running harp on <strong>Standalone Linux System</strong> Ensure that HARP_HOME environment variable is set to the HARP install directory and the Cheetah and HARP binaries are in PATH</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span><span class="nv">$HARP_HOME</span><span class="w"> </span>
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$PATH</span>
+</pre></div>
+</div>
+</li>
+<li><p>Run the following commands to execute the framework from the target application folder</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nb">cd</span><span class="w"> </span>&lt;path-to-01-eulers_number-
+<span class="w">  </span>folder&gt;
+<span class="w">  </span>chmod<span class="w"> </span><span class="m">755</span><span class="w"> </span>*
+<span class="w">  </span>harp<span class="w"> </span>pipeline_config.json
+</pre></div>
+</div>
+<p><strong>Before executing the harp, make sure to modify the absolute-paths in ‘pipeline_config.json’ file to the target application folder i.e., this example folder.</strong></p>
+<ol class="arabic simple" start="3">
+<li><p>The framework performs the following operations</p>
+<ul class="simple">
+<li><p>Generates training data with three different configurations (scaled-down, full-scale, and test-data), copies it to the pipeline/applications/<application-name>/train folder for further processing</p></li>
+<li><p>It pre-processes the data and transforms the training data using principal component analysis, upsamples full-scale executions to match scaled-down training samples, and trains and stores the regression models with different configurations</p></li>
+<li><p>The regression model with better predictions (lower no. of under-predictions and lower MAPE of over-estimations) suitable for Euler training data is selected and is used to predict the walltime estimations for the test-data configurations.
+The results of the framework are stored in predictions.csv in the target application folder.</p></li>
+</ul>
+</li>
+</ol>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tapis-project/README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/harp/examples/01-eulers_number/README.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

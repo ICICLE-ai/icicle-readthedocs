@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Applications &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="applications">
+<span id="apps"></span><h1>Applications<a class="headerlink" href="#applications" title="Link to this heading">¶</a></h1>
+<p>In order to run a job on a system you will need to create or have access to a Tapis <strong>application</strong>.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>A Tapis application represents all the information required to run a Tapis job on a Tapis system and produce useful
+results. Each application is versioned and is associated with a specific tenant and owned by a specific user who has
+special privileges for the application. In order to support this purpose an application definition includes information
+which allows the <em>Jobs</em> service to:</p>
+<ul class="simple">
+<li><p>Stage input prior to launching the application</p></li>
+<li><p>Launch the application</p></li>
+<li><p>Monitor the application during execution</p></li>
+<li><p>Archive output after application execution</p></li>
+</ul>
+</section>
+<section id="model">
+<h2>Model<a class="headerlink" href="#model" title="Link to this heading">¶</a></h2>
+<p>At a high level an application contains some information that is independent of the version and some information that
+varies by version.</p>
+<section id="non-versioned-attributes">
+<h3>Non-Versioned Attributes<a class="headerlink" href="#non-versioned-attributes" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt><em>id</em></dt><dd><p>A short descriptive name for the application that is unique within the tenant.</p>
+</dd>
+<dt><em>owner</em></dt><dd><p>A specific user set at application creation. Default is <code class="docutils literal notranslate"><span class="pre">${apiUserId}</span></code>, the user making the request to
+create the application.</p>
+</dd>
+<dt><em>enabled</em></dt><dd><p>Indicates if application is currently considered active and available for use. Default is <em>true</em>.</p>
+</dd>
+<dt><em>deleted</em></dt><dd><p>Indicates if application has been soft deleted.</p>
+</dd>
+<dt><em>created</em></dt><dd><p>When the application was created. Maintained by service.</p>
+</dd>
+<dt><em>updated</em></dt><dd><p>When the application was last updated. Maintained by service.</p>
+</dd>
+</dl>
+</section>
+<section id="versioned-attributes">
+<h3>Versioned Attributes<a class="headerlink" href="#versioned-attributes" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt><em>version</em></dt><dd><p>Applications are expected to evolve over time. <code class="docutils literal notranslate"><span class="pre">Id</span></code> + <code class="docutils literal notranslate"><span class="pre">version</span></code> must be unique within a tenant.</p>
+</dd>
+<dt><em>description</em></dt><dd><p>An optional more verbose description for the application.</p>
+</dd>
+<dt><em>runtime</em></dt><dd><p>Runtime to be used when executing the application. DOCKER, SINGULARITY. Default is DOCKER.</p>
+</dd>
+<dt><em>runtimeVersion</em></dt><dd><p>Runtime version to be used when executing the application.</p>
+</dd>
+<dt><em>runtimeOptions</em></dt><dd><p>Options that apply to the runtime. Currently only applicable for SINGULARITY runtime.</p>
+</dd>
+<dt><em>containerImage</em></dt><dd><p>Reference to be used when running the container image.</p>
+</dd>
+<dt><em>jobType</em></dt><dd><p>FORK or BATCH. Jobs submitted will be of this type by default. May be overridden in the job submit request.
+This allows an application designer to test an application run as a FORK job, for example, and then move on to
+running as a BATCH job which typically involves further design work. Default is FORK.</p>
+</dd>
+<dt><em>maxJobs</em></dt><dd><p>Maximum total number of jobs that can be queued or running for this application on a given execution system at
+a given time. Note that the execution system may also limit the number of jobs on the system which may further
+restrict the total number of jobs. Set to -1 for unlimited. Default is unlimited.</p>
+</dd>
+<dt><em>maxJobsPerUser</em></dt><dd><p>Maximum total number of jobs associated with a specific job owner that can be queued or running for this application
+on a given execution system at a given time. Note that the execution system may also limit the number of jobs on the
+system which may further restrict the total number of jobs. Set to -1 for unlimited. Default is unlimited.</p>
+</dd>
+<dt><em>strictFileInputs</em></dt><dd><p>Indicates if a job request is allowed to have unnamed file inputs. If set to true then a job request may only use
+the named file inputs defined in the application. See attribute <em>fileInputs</em> in the JobAttributes table.
+Default is <em>false</em>.</p>
+</dd>
+<dt><em>Job related attributes</em></dt><dd><p>Various attributes related to job execution such as <em>execSystemId</em>, <em>execSystemExecDir</em>, <em>execSystemInputDir</em>,
+<em>execSystemLogicalQueue</em> <em>archiveSystemId</em>, <em>fileInputs</em>, etc.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Currently dynamic selection of an execution system is not supported. For this reason the job related attribute
+<em>dynamicExecSystem</em> should be set to <em>false</em> (the default) and <em>execSystemConstraints</em> should not be set.</p>
+</div>
+</section>
+<section id="required-attributes">
+<h3>Required Attributes<a class="headerlink" href="#required-attributes" title="Link to this heading">¶</a></h3>
+<p>When creating a application the required attributes are: <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">version</span></code> and  <code class="docutils literal notranslate"><span class="pre">containerImage</span></code>.
+Depending on the type of application and specific values for certain attributes there are other requirements.</p>
+<p>The restrictions are:</p>
+<ul class="simple">
+<li><p>If <code class="docutils literal notranslate"><span class="pre">archiveSystemId</span></code> is specified then <code class="docutils literal notranslate"><span class="pre">archiveSystemDir</span></code> must be specified.</p></li>
+</ul>
+</section>
+<section id="attributes-and-the-job-execution-environment">
+<h3>Attributes and the Job Execution Environment<a class="headerlink" href="#attributes-and-the-job-execution-environment" title="Link to this heading">¶</a></h3>
+<p>The runtime environment of a Tapis job is determined by values in the job submit request, the application definition
+and the execution system definition. Generally speaking, for values that can be assigned in multiple places, the
+values in the job submit request override those in the application definition, which in turn override those in the
+system definition. There are special cases, however, where the values from different definitions are merged.</p>
+<p>See the jobs/apps/systems parameter <a class="reference external" href="https://drive.google.com/file/d/1BrY6tHzOegwsgDMrhcKE7RHH7HRAA0Do/view?usp=sharing">matrix</a> for a detailed description of how each attribute is handled.</p>
+</section>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h2>
+<p>Before going into further details about applications, here we give some examples of how to create and view applications.
+In the examples below we assume you are using the TACC tenant with a base URL of <code class="docutils literal notranslate"><span class="pre">tacc.tapis.io</span></code> and that you have
+authenticated using PySDK or obtained an authorization token and stored it in the environment variable JWT,
+or perhaps both.</p>
+<section id="creating-an-application">
+<h3>Creating an application<a class="headerlink" href="#creating-an-application" title="Link to this heading">¶</a></h3>
+<p>Create a local file named <code class="docutils literal notranslate"><span class="pre">app_sample.json</span></code> with json similar to the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;id&quot;</span><span class="p">:</span><span class="s2">&quot;tacc-sample-app-&lt;userid&gt;&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;version&quot;</span><span class="p">:</span><span class="s2">&quot;0.1&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;description&quot;</span><span class="p">:</span><span class="s2">&quot;My sample application&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;runtime&quot;</span><span class="p">:</span><span class="s2">&quot;DOCKER&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;containerImage&quot;</span><span class="p">:</span><span class="s2">&quot;docker.io/hello-world:latest&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;jobType&quot;</span><span class="p">:</span><span class="s2">&quot;FORK&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;jobAttributes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;default job description&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;execSystemId&quot;</span><span class="p">:</span> <span class="s2">&quot;execsystem1&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>where &lt;userid&gt; is replaced with your user name.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If specified, <code class="docutils literal notranslate"><span class="pre">execSystemId</span></code> must reference a system that exists and has <code class="docutils literal notranslate"><span class="pre">canExec</span></code> set to true. If
+<code class="docutils literal notranslate"><span class="pre">execSystemId</span></code> is not specified, then it must be provided as part of the job submit request.</p>
+</div>
+<p>Using PySDK:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">tapipy.tapis</span> <span class="kn">import</span> <span class="n">Tapis</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">Tapis</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="s1">&#39;https://tacc.tapis.io&#39;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s1">&#39;&lt;userid&gt;&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;************&#39;</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;app_sample.json&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">openfile</span><span class="p">:</span>
+    <span class="n">my_app</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">openfile</span><span class="p">)</span>
+<span class="n">t</span><span class="o">.</span><span class="n">apps</span><span class="o">.</span><span class="n">createAppVersion</span><span class="p">(</span><span class="o">**</span><span class="n">my_app</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Using CURL:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -X POST -H &quot;content-type: application/json&quot; -H &quot;X-Tapis-Token: $JWT&quot; https://tacc.tapis.io/v3/apps -d @app_sample.json
+</pre></div>
+</div>
+</section>
+<section id="viewing-applications">
+<h3>Viewing Applications<a class="headerlink" href="#viewing-applications" title="Link to this heading">¶</a></h3>
+<section id="retrieving-details-for-an-application">
+<h4>Retrieving details for an application<a class="headerlink" href="#retrieving-details-for-an-application" title="Link to this heading">¶</a></h4>
+<p>To retrieve details for a specific application, such as the one above:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>See the section below on <a class="reference internal" href="#selecting">Selecting</a> to find out how to control the amount of information returned.</p>
+</div>
+<p>Using PySDK:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">apps</span><span class="o">.</span><span class="n">getAppLatestVersion</span><span class="p">(</span><span class="n">appId</span><span class="o">=</span><span class="s1">&#39;tacc-sample-app-&lt;userid&gt;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Using CURL:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token: $JWT&quot; https://tacc.tapis.io/v3/apps/tacc-sample-app-&lt;userid&gt;
+</pre></div>
+</div>
+<p>The response should look similar to the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+   <span class="s2">&quot;result&quot;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="s2">&quot;tenant&quot;</span><span class="p">:</span> <span class="s2">&quot;tacc&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;tacc-sample-app-&lt;userid&gt;&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.1&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;My sample application&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;userid&gt;&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+       <span class="s2">&quot;runtime&quot;</span><span class="p">:</span> <span class="s2">&quot;DOCKER&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;runtimeVersion&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+       <span class="s2">&quot;runtimeOptions&quot;</span><span class="p">:</span> <span class="p">[],</span>
+       <span class="s2">&quot;containerImage&quot;</span><span class="p">:</span> <span class="s2">&quot;docker.io/hello-world:latest&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;jobType&quot;</span><span class="p">:</span> <span class="s2">&quot;FORK&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;maxJobs&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+       <span class="s2">&quot;maxJobsPerUser&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+       <span class="s2">&quot;strictFileInputs&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+       <span class="s2">&quot;jobAttributes&quot;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;default job description&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;dynamicExecSystem&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+           <span class="s2">&quot;execSystemConstraints&quot;</span><span class="p">:</span> <span class="p">[],</span>
+           <span class="s2">&quot;execSystemId&quot;</span><span class="p">:</span> <span class="s2">&quot;execsystem1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;execSystemExecDir&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+           <span class="s2">&quot;execSystemInputDir&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+           <span class="s2">&quot;execSystemOutputDir&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+           <span class="s2">&quot;execSystemLogicalQueue&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+           <span class="s2">&quot;archiveSystemId&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+           <span class="s2">&quot;archiveSystemDir&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+           <span class="s2">&quot;archiveOnAppError&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+           <span class="s2">&quot;isMpi&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+           <span class="s2">&quot;mpiCmd&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+           <span class="s2">&quot;cmdPrefix&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+           <span class="s2">&quot;parameterSet&quot;</span><span class="p">:</span> <span class="p">{</span>
+               <span class="s2">&quot;appArgs&quot;</span><span class="p">:</span> <span class="p">[</span>
+                 <span class="p">{</span>
+                   <span class="s2">&quot;arg&quot;</span><span class="p">:</span> <span class="s2">&quot;arg1&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;appArg1Name&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;description for app arg 1&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;inputMode&quot;</span><span class="p">:</span> <span class="s2">&quot;FIXED&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{</span>
+                     <span class="s2">&quot;arg1note&quot;</span><span class="p">:</span> <span class="s2">&quot;my first arg&quot;</span>
+                   <span class="p">}</span>
+                 <span class="p">}</span>
+               <span class="p">],</span>
+               <span class="s2">&quot;containerArgs&quot;</span><span class="p">:</span> <span class="p">[],</span>
+               <span class="s2">&quot;schedulerOptions&quot;</span><span class="p">:</span> <span class="p">[],</span>
+               <span class="s2">&quot;envVariables&quot;</span><span class="p">:</span> <span class="p">[</span>
+                 <span class="p">{</span>
+                   <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;ENV_1&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;env_1_value&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;my env var #1&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;inputMode&quot;</span><span class="p">:</span> <span class="s2">&quot;INCLUDE_BY_DEFAULT&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{}</span>
+                 <span class="p">},</span>
+                 <span class="p">{</span>
+                   <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;APP_ONLY_FIXED_SET&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;app_only_fixed_set&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;FIXED env var only in app definition&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;inputMode&quot;</span><span class="p">:</span> <span class="s2">&quot;FIXED&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{</span>
+                     <span class="s2">&quot;app_only_fixed_notes&quot;</span><span class="p">:</span> <span class="s2">&quot;testing_it&quot;</span>
+                   <span class="p">}</span>
+                 <span class="p">},</span>
+                 <span class="p">{</span>
+                   <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;APP_REQUIRED_SET&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;app_required_set&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;inputMode&quot;</span><span class="p">:</span> <span class="s2">&quot;REQUIRED&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{}</span>
+                 <span class="p">}</span>
+               <span class="p">],</span>
+               <span class="s2">&quot;archiveFilter&quot;</span><span class="p">:</span> <span class="p">{</span>
+                   <span class="s2">&quot;includes&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                   <span class="s2">&quot;excludes&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                   <span class="s2">&quot;includeLaunchFiles&quot;</span><span class="p">:</span> <span class="n">true</span>
+               <span class="p">}</span>
+           <span class="p">},</span>
+           <span class="s2">&quot;fileInputs&quot;</span><span class="p">:</span> <span class="p">[</span>
+             <span class="p">{</span>
+               <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An empty file&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;inputMode&quot;</span><span class="p">:</span> <span class="s2">&quot;OPTIONAL&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;autoMountLocal&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+               <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{},</span>
+               <span class="s2">&quot;sourceUrl&quot;</span><span class="p">:</span> <span class="s2">&quot;tapis://test-storage-linux/data_input/empty.txt&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;targetPath&quot;</span><span class="p">:</span> <span class="s2">&quot;empty.txt&quot;</span>
+             <span class="p">},</span>
+             <span class="p">{</span>
+               <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;file1&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A random text file&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;inputMode&quot;</span><span class="p">:</span> <span class="s2">&quot;REQUIRED&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;autoMountLocal&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+               <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{},</span>
+               <span class="s2">&quot;sourceUrl&quot;</span><span class="p">:</span> <span class="s2">&quot;tapis://test-storage-linux/data_input/file1.txt&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;targetPath&quot;</span><span class="p">:</span> <span class="s2">&quot;file1.txt&quot;</span>
+             <span class="p">},</span>
+             <span class="p">{</span>
+               <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;s3_ceph_file&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A file from an s3 ceph storage system.&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;inputMode&quot;</span><span class="p">:</span> <span class="s2">&quot;REQUIRED&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;autoMountLocal&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+               <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{},</span>
+               <span class="s2">&quot;sourceUrl&quot;</span><span class="p">:</span> <span class="s2">&quot;tapis://test-storage-s3-ceph/object1&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;targetPath&quot;</span><span class="p">:</span> <span class="s2">&quot;s3_ceph_file.dat&quot;</span>
+             <span class="p">},</span>
+             <span class="p">{</span>
+               <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;s3_aws_test1&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;File from an s3 aws storage system.&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;inputMode&quot;</span><span class="p">:</span> <span class="s2">&quot;REQUIRED&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;autoMountLocal&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+               <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{},</span>
+               <span class="s2">&quot;sourceUrl&quot;</span><span class="p">:</span> <span class="s2">&quot;tapis://test-s3-storage/object2&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;targetPath&quot;</span><span class="p">:</span> <span class="s2">&quot;s3_aws/test1.dat&quot;</span>
+             <span class="p">}</span>
+           <span class="p">],</span>
+           <span class="s2">&quot;fileInputArrays&quot;</span><span class="p">:</span> <span class="p">[</span>
+             <span class="p">{</span>
+               <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;fileInputArray1&quot;</span><span class="p">,</span>
+                     <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A list of files in a single directory&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;sourceUrls&quot;</span><span class="p">:</span> <span class="p">[</span>
+                  <span class="s2">&quot;tapis://test-storage-linux/data_input/file1a.txt&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;tapis://test-storage-linux/data_input/file2a.txt&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;tapis://test-storage-linux/data_input/file3a.txt&quot;</span>
+               <span class="p">],</span>
+               <span class="s2">&quot;targetDir&quot;</span><span class="p">:</span> <span class="s2">&quot;myFileInputArrayDir/subdir1&quot;</span>
+             <span class="p">}</span>
+           <span class="p">],</span>
+           <span class="s2">&quot;nodeCount&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+           <span class="s2">&quot;coresPerNode&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+           <span class="s2">&quot;memoryMB&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+           <span class="s2">&quot;maxMinutes&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+           <span class="s2">&quot;subscriptions&quot;</span><span class="p">:</span> <span class="p">[</span>
+             <span class="p">{</span>
+               <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Email on job new status&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+               <span class="s2">&quot;jobEventCategoryFilter&quot;</span><span class="p">:</span> <span class="s2">&quot;JOB_NEW_STATUS&quot;</span><span class="p">,</span>
+               <span class="s2">&quot;deliveryTargets&quot;</span><span class="p">:</span> <span class="p">[</span>
+                 <span class="p">{</span>
+                   <span class="s2">&quot;deliveryMethod&quot;</span><span class="p">:</span> <span class="s2">&quot;EMAIL&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;deliveryAddress&quot;</span><span class="p">:</span> <span class="s2">&quot;me@example.com&quot;</span>
+                 <span class="p">}</span>
+               <span class="p">],</span>
+               <span class="s2">&quot;ttlMinutes&quot;</span><span class="p">:</span> <span class="mi">10080</span>
+             <span class="p">}</span>
+           <span class="p">],</span>
+           <span class="s2">&quot;tags&quot;</span><span class="p">:</span> <span class="p">[]</span>
+       <span class="p">},</span>
+       <span class="s2">&quot;tags&quot;</span><span class="p">:</span> <span class="p">[],</span>
+       <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">{},</span>
+       <span class="s2">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;40a60a11-41fe-45ea-8674-d2cfe04992f6&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;deleted&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+       <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-22T21:30:10.590999Z&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-22T21:30:10.590999Z&quot;</span>
+   <span class="p">},</span>
+   <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;TAPIS_FOUND App found: tacc-sample-app-&lt;userid&gt;&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1-SNAPSHOT&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">null</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="retrieving-details-for-all-applications">
+<h4>Retrieving details for all applications<a class="headerlink" href="#retrieving-details-for-all-applications" title="Link to this heading">¶</a></h4>
+<p>To see the list of applications that you own:</p>
+<p>Using PySDK:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">apps</span><span class="o">.</span><span class="n">getApps</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Using CURL:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token: $JWT&quot; https://tacc.tapis.io/v3/apps?select=allAttributes
+</pre></div>
+</div>
+<p>The response should contain a list of items similar to the single listing shown above.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>See the sections below on <a class="reference internal" href="#searching">Searching</a>, <a class="reference internal" href="#selecting">Selecting</a>, <a class="reference internal" href="#sorting">Sorting</a> and <a class="reference internal" href="#limiting">Limiting</a> to find out how to control the
+amount of information returned.</p>
+</div>
+</section>
+</section>
+</section>
+<section id="minimal-definition-and-restrictions">
+<h2>Minimal Definition and Restrictions<a class="headerlink" href="#minimal-definition-and-restrictions" title="Link to this heading">¶</a></h2>
+<p>When creating an application the required attributes are: <em>id</em>, <em>version</em> and <em>containerImage</em>
+Depending on the type of application and specific values for certain attributes there are other requirements.
+The restrictions are:</p>
+<ul class="simple">
+<li><p>If <em>archiveSystemId</em> is specified then <em>archiveSystemDir</em> is required.</p></li>
+</ul>
+</section>
+<section id="version">
+<h2>Version<a class="headerlink" href="#version" title="Link to this heading">¶</a></h2>
+<p>The versioning scheme is at the discretion of the application author. The combination of <code class="docutils literal notranslate"><span class="pre">tenant+id+version</span></code> uniquely
+identifies an application in the Tapis environment. It is recommended that a two or three level form of
+semantic versioning be used. The fully qualified application reference within a tenant is constructed by appending
+a hyphen to the name followed by the version string. For example, the first two versions of an application might
+be <em>myapp-0.0.1</em> and <em>myapp-0.0.2</em>. If a version is not specified when retrieving an application then by default the
+most recently created version of the application will be returned.</p>
+</section>
+<section id="containerized-application">
+<h2>Containerized Application<a class="headerlink" href="#containerized-application" title="Link to this heading">¶</a></h2>
+<p>An application that has been containerized is one that can be executed using a single container image. Tapis will use
+the appropriate container runtime command and provide support for making the input and output directories available to
+the container when running the container image.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Currently only containerized applications are supported</p>
+</div>
+</section>
+<section id="directory-semantics-and-macros">
+<h2>Directory Semantics and Macros<a class="headerlink" href="#directory-semantics-and-macros" title="Link to this heading">¶</a></h2>
+<p>At job submission time the Jobs service supports the use of macros based on template variables. These variables may be
+referenced when specifying directories in an application definition. For a full list of supported variables and more
+information please see the Jobs Service documentation.
+Here are some examples of variables that may be used when specifying directories for an application:</p>
+<ul class="simple">
+<li><p><em>JobUUID</em> - The Id of the job determined at job submission.</p></li>
+<li><p><em>JobOwner</em> - The owner of the job determined at job submission.</p></li>
+<li><p><em>JobWorkingDir</em> - Default parent directory from which a job is run. This will be relative to the effective root
+directory <em>rootDir</em> on the execution system. <em>rootDir</em> and <em>jobWorkingDir</em> are attributes of the execution system.</p></li>
+<li><p><em>HOST_EVAL($&lt;ENV_VARIABLE&gt;)</em> - The value of the environment variable <em>ENV_VARIABLE</em> when evaluated on the execution
+system host when logging in under the job’s effective user ID. This is a dynamic value determined at job submission
+time. The function <em>HOST_EVAL()</em> extracts specific environment variable values for use during job setup. In
+particular, the TACC specific values of <em>$HOME</em>, <em>$WORK</em>, <em>$SCRATCH</em> and <em>$FLASH</em> can be referenced. The specified
+environment variable name is used <strong>as-is</strong>. It is <strong>not</strong> subject to macro substitution. However, the function call
+can have a path string appended to it, such as in <em>HOST_EVAL($SCRATCH)/tmp/${JobUUID}</em>, and macro substitution will be
+applied to the path string.</p></li>
+</ul>
+</section>
+<section id="permissions">
+<h2>Permissions<a class="headerlink" href="#permissions" title="Link to this heading">¶</a></h2>
+<p>The permissions model allows for fine grained access control of Tapis applications.</p>
+<p>At application creation time the owner is given full access to the application.
+Permissions for other users may be granted and revoked through the applications API. Please
+note that grants and revokes through this service only impact the default role for the
+user. A user may still have access through permissions in another role. So even after
+revoking permissions through this service when permissions are retrieved the access may
+still be listed. This indicates access has been granted via another role.</p>
+<p>Permissions are specified as either <code class="docutils literal notranslate"><span class="pre">*</span></code> for all permissions or some combination of the
+following specific permissions: <code class="docutils literal notranslate"><span class="pre">(&quot;READ&quot;,&quot;MODIFY&quot;,&quot;EXECUTE&quot;)</span></code>. Specifying permissions in all
+lower case is also allowed. Having <code class="docutils literal notranslate"><span class="pre">MODIFY</span></code> implies <code class="docutils literal notranslate"><span class="pre">READ</span></code>.</p>
+</section>
+<section id="sharing">
+<h2>Sharing<a class="headerlink" href="#sharing" title="Link to this heading">¶</a></h2>
+<p>In addition to fine grained permissions support, Tapis also supports a higher level approach to granting access.
+This approach is known simply as <em>sharing</em>. The sharing API allows you to share an application with a set of users
+as well as share publicly with all users in a tenant. Sharing grants <code class="docutils literal notranslate"><span class="pre">READ+EXECUTE</span></code> access and, more importantly,
+facilitates allowing others to run a job using the application.</p>
+<p>Sharing an application gives a user certain implicit access to resources in the context of running a job.
+When a properly designed application is shared it may be used by many users to run jobs without the need to explicitly
+grant permissions to associated resources such as systems and file paths.</p>
+<p>For more information on sharing please see <a class="reference internal" href="sharing.html"><span class="doc">Resource Sharing</span></a></p>
+</section>
+<section id="deletion">
+<h2>Deletion<a class="headerlink" href="#deletion" title="Link to this heading">¶</a></h2>
+<p>An application may be deleted and undeleted. Deletion means the application is marked as deleted and is no longer
+available for use. Note that although this is a soft delete the operation is intended for use when an application
+is to be permanently made unavailable for use. To temporarily make an application unavailable for use please use
+support for enabling and disabling an application.</p>
+<p>By default deleted applications will not be included in searches and operations on deleted applications will not be
+allowed. When listing applications the query parameter <em>showDeleted</em> may be used in order to include deleted
+applications in the results. Note that deletion applies to all version of an application. It is not possible to delete
+a specific version.</p>
+</section>
+<section id="application-attributes-table">
+<h2>Application Attributes Table<a class="headerlink" href="#application-attributes-table" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>tenant</p></td>
+<td><p>String</p></td>
+<td><p>designsafe</p></td>
+<td><ul class="simple">
+<li><p>Name of the tenant for which the application is defined.</p></li>
+<li><p><em>tenant</em> + $version* + <em>id</em> must be unique.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>id</p></td>
+<td><p>String</p></td>
+<td><p>my-ds-app</p></td>
+<td><ul class="simple">
+<li><p>Name of the application. URI safe, see RFC 3986.</p></li>
+<li><p><em>tenant</em> + $version* + <em>id</em> must be unique.</p></li>
+<li><p>Allowed characters: Alphanumeric [0-9a-zA-Z] and special characters [-._~].</p></li>
+<li><p><strong>Required</strong> at creation time.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>version</p></td>
+<td><p>String</p></td>
+<td><p>0.0.1</p></td>
+<td><ul class="simple">
+<li><p>Version of the application. URI safe, see RFC 3986.</p></li>
+<li><p><em>tenant</em> + $version* + <em>id</em> must be unique.</p></li>
+<li><p>Allowed characters: Alphanumeric [0-9a-zA-Z] and special characters [-._~].</p></li>
+<li><p><strong>Required</strong> at creation time.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>description</p></td>
+<td><p>String</p></td>
+<td><p>A sample application</p></td>
+<td><ul class="simple">
+<li><p>Optional description</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>owner</p></td>
+<td><p>String</p></td>
+<td><p>jdoe</p></td>
+<td><ul class="simple">
+<li><p>User name of <em>owner</em>.</p></li>
+<li><p>Variable references: <em>${apiUserId}</em></p></li>
+<li><p>Default is <em>${apiUserId}</em></p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>enabled</p></td>
+<td><p>boolean</p></td>
+<td><p>FALSE</p></td>
+<td><ul class="simple">
+<li><p>Indicates if application currently enabled for use. Default is TRUE.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>runtime</p></td>
+<td><p>enum</p></td>
+<td><p>SINGULARITY</p></td>
+<td><ul class="simple">
+<li><p>Runtime to be used when executing the application.</p></li>
+<li><p>Runtimes: DOCKER, SINGULARITY</p></li>
+<li><p>Default is DOCKER</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>runtimeVersion</p></td>
+<td><p>String</p></td>
+<td><p>2.5.2</p></td>
+<td><ul class="simple">
+<li><p>Optional version or range of versions required.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>runtimeOptions</p></td>
+<td><p>[enum]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Options that apply to specific runtimes.</p></li>
+<li><p>Options: NONE, SINGULARITY_START, SINGULARITY_RUN</p></li>
+<li><p>If runtime is SINGULARITY then must have one of SINGULARITY_START, SINGULARITY_RUN</p></li>
+<li><p>Default is NONE.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>containerImage</p></td>
+<td><p>String</p></td>
+<td><p>docker.io/hello-world</p></td>
+<td><ul class="simple">
+<li><p>Reference for the container image. Other examples:</p></li>
+<li><p>Singularity: shub://GodloveD/lolcow</p></li>
+<li><p>Docker: tapis/hello-tapis:0.0.1</p></li>
+<li><p><strong>Required</strong> at creation time.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>jobType</p></td>
+<td><p>enum</p></td>
+<td><p>BATCH</p></td>
+<td><ul class="simple">
+<li><p>Default job type.</p></li>
+<li><p>Types: BATCH, FORK</p></li>
+<li><p>Jobs will be of this type by default. May be overridden in the job submit request.</p></li>
+<li><p>Default is FORK.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>maxJobs</p></td>
+<td><p>int</p></td>
+<td><p>10</p></td>
+<td><ul class="simple">
+<li><p>Max number of jobs that can be running for this app on a system.</p></li>
+<li><p>System may also limit the number of jobs.</p></li>
+<li><p>Set to -1 for unlimited. Default is unlimited.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>maxJobsPerUser</p></td>
+<td><p>int</p></td>
+<td><p>2</p></td>
+<td><ul class="simple">
+<li><p>Max number of jobs per job owner.</p></li>
+<li><p>System may also limit the number of jobs.</p></li>
+<li><p>Set to -1 for unlimited. Default is unlimited.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>strictFileInputs</p></td>
+<td><p>boolean</p></td>
+<td><p>FALSE</p></td>
+<td><ul class="simple">
+<li><p>Indicates if a job request is allowed to have unnamed file inputs.</p></li>
+<li><p>If TRUE then a job request may only use named file inputs defined in the app.</p></li>
+<li><p>Default is FALSE.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>jobAttributes</p></td>
+<td><p>JobAttributes</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Various attributes related to job execution.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>tags</p></td>
+<td><p>[String]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>List of tags as simple strings.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>notes</p></td>
+<td><p>String</p></td>
+<td><p>{“project”: “myproj”}</p></td>
+<td><ul class="simple">
+<li><p>Simple metadata in the form of a Json object.</p></li>
+<li><p>Not used by Tapis.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>uuid</p></td>
+<td><p>UUID</p></td>
+<td><p>20281</p></td>
+<td><ul class="simple">
+<li><p>Auto-generated by service.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>created</p></td>
+<td><p>Timestamp</p></td>
+<td><p>2020-06-19T15:10:43Z</p></td>
+<td><ul class="simple">
+<li><p>When the app was created. Maintained by service.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>updated</p></td>
+<td><p>Timestamp</p></td>
+<td><p>2020-07-04T23:21:22Z</p></td>
+<td><ul class="simple">
+<li><p>When the app was last updated. Maintained by service.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="jobattributes-table">
+<h2>JobAttributes Table<a class="headerlink" href="#jobattributes-table" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>description</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Description to be filled in when this application is used to run a job.</p></li>
+<li><p>Macros allow this to act as a template to be filled in at job runtime.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>execSystemId</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Specific system on which the application is to be run.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>execSystemExecDir</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Directory where application assets are staged.</p></li>
+<li><p>Current working directory at application launch time.</p></li>
+<li><p>Macro template variables such as ${JobWorkingDir} may be used.</p></li>
+<li><p>Default is ${JobWorkingDir}/jobs/${JobUUID}</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>execSystemInputDir</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Directory where Tapis is to stage the inputs required by the application.</p></li>
+<li><p>Macro template variables such as ${JobWorkingDir} may be used.</p></li>
+<li><p>Default is ${JobWorkingDir}/jobs/${JobUUID}</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>execSystemOutputDir</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Directory where Tapis expects the application to store its final output results.</p></li>
+<li><p>Files here are candidates for archiving.</p></li>
+<li><p>Macro template variables such as ${JobWorkingDir} may be used.</p></li>
+<li><p>Default is ${JobWorkingDir}/jobs/${JobUUID}/output</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>execSystem
+LogicalQueue</p></td>
+<td><p>String</p></td>
+<td><p>normal</p></td>
+<td><ul class="simple">
+<li><p>LogicalQueue to use when running the job.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>archiveSystemId</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>System to use when archiving outputs.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>archiveSystemDir</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Directory on <em>archiveSystemId</em> where outputs will be placed.</p></li>
+<li><p>This will be relative to the effective root directory defined for archiveSystemId.</p></li>
+<li><p>Default is ${JobWorkingDir}/jobs/${JobUUID}</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>archiveOnAppError</p></td>
+<td><p>boolean</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Indicates if outputs should be archived if there is an error while running job.</p></li>
+<li><p>The default is TRUE.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>isMpi</p></td>
+<td><p>boolean</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Indicates that application is to be executed as an MPI job.</p></li>
+<li><p>The default is FALSE.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>mpiCmd</p></td>
+<td><p>String</p></td>
+<td><p>“mpirun”
+“ibrun -n 4”</p></td>
+<td><ul class="simple">
+<li><p>Command used to launch MPI jobs.</p></li>
+<li><p>Prepended to the command used to execute the application.</p></li>
+<li><p>Conflicts with cmdPrefix if isMpi is set.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>cmdPrefix</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>String prepended to the application invocation command.</p></li>
+<li><p>Conflicts with mpiCmd if isMpi is set.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>parameterSet</p></td>
+<td><p>ParameterSet</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Various collections used during job execution.</p></li>
+<li><p>App arguments, container arguments, scheduler options, environment variables, etc.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>fileInputs</p></td>
+<td><p>[FileInput]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Collection of file inputs that must be staged for the application.</p></li>
+<li><p>Each input must have a name.</p></li>
+<li><p><em>strictFileInputs</em> =TRUE means only inputs defined here may be specified for job.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>fileInputArrays</p></td>
+<td><p>[FileInputArray]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Collection of arrays of inputs that must be staged for the application.</p></li>
+<li><p>Each input must have a name. All inputs in an array have the same target directory.</p></li>
+<li><p><em>strictFileInputs</em> =TRUE means only inputs defined here may be specified for job.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>nodeCount</p></td>
+<td><p>int</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Number of nodes to request during job submission.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>coresPerNode</p></td>
+<td><p>int</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Number of cores per node to request during job submission.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>memoryMB</p></td>
+<td><p>int</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Memory in megabytes to request during job submission.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>maxMinutes</p></td>
+<td><p>int</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Run time to request during job submission.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>subscriptions</p></td>
+<td></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Notification subscriptions.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>tags</p></td>
+<td><p>[String]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>List of tags as simple strings.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="parameterset-attributes-table">
+<h2>ParameterSet Attributes Table<a class="headerlink" href="#parameterset-attributes-table" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>appArgs</p></td>
+<td><p>[Arg]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Command line arguments passed to the application.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>containerArgs</p></td>
+<td><p>[Arg]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Command line arguments passed to the container runtime.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>schedulerOptions</p></td>
+<td><p>[Arg]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Scheduler options passed to the HPC batch scheduler.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>envVariables</p></td>
+<td><p>[KeyValuePair]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Environment variables placed into the runtime environment.</p></li>
+<li><p>Each entry has <em>key</em> (required) and <em>value</em> (optional) as well as other attributes.</p></li>
+<li><p>See table <em>KeyValuePair Attributes</em> below for more information.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>archiveFilter</p></td>
+<td><p>ArchiveFilter</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Sets of files to include or exclude when archiving.</p></li>
+<li><p>Default is to include all files in <em>execSystemOutputDir</em>.</p></li>
+<li><p>See table below.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="archivefilter-attributes-table">
+<h2>ArchiveFilter Attributes Table<a class="headerlink" href="#archivefilter-attributes-table" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>includes</p></td>
+<td><p>[String]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Files to include when archiving after execution of the application.</p></li>
+<li><p>excludes list has precedence.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>excludes</p></td>
+<td><p>[String]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Files to skip when archiving after execution of the application.</p></li>
+<li><p>excludes list has precedence.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>includeLaunchFiles</p></td>
+<td><p>boolean</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Indicates if Tapis generated launch scripts are to be included when archiving.</p></li>
+<li><p>The default is TRUE.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="arg-attributes-table">
+<h2>Arg Attributes Table<a class="headerlink" href="#arg-attributes-table" title="Link to this heading">¶</a></h2>
+<p>For more information on how the <em>inputMode</em> attribute is used during job processing, please see <a class="reference external" href="https://tapis.readthedocs.io/en/latest/technical/jobs.html#argument-processing">JobsArgProcessing</a>.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Identifying label associated with the argument.</p></li>
+<li><p><strong>Required</strong> at creation time.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>description</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Optional description of the argument which may include usage, purpose, etc.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>inputMode</p></td>
+<td><p>enum</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Indicates how argument is to be treated when processing individual job requests.</p></li>
+<li><p>Modes: REQUIRED, FIXED, INCLUDE_ON_DEMAND, INCLUDE_BY_DEFAULT</p></li>
+<li><p>Default is INCLUDE_ON_DEMAND.</p></li>
+<li><p>REQUIRED: Must be provided in a job request.</p></li>
+<li><p>FIXED: Completely defined in the application and not overridable in a job request.</p></li>
+<li><p>INCLUDE_ON_DEMAND: Included if referenced in a job request.</p></li>
+<li><p>INCLUDE_BY_DEFAULT: Included unless <em>include=false</em> in a job request.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>arg</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Value for the argument</p></li>
+<li><p><strong>Required</strong> at creation time.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>notes</p></td>
+<td><p>String</p></td>
+<td><p>{“fieldType”: “int”}</p></td>
+<td><ul class="simple">
+<li><p>Metadata in the form of a Json object, such as type, allowed values, etc.</p></li>
+<li><p>Not used by Tapis.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="keyvaluepair-attributes-table">
+<h2>KeyValuePair Attributes Table<a class="headerlink" href="#keyvaluepair-attributes-table" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>key</p></td>
+<td><p>String</p></td>
+<td><p>“INPUT_FILE”</p></td>
+<td><ul class="simple">
+<li><p>Environment variable name. Required.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>value</p></td>
+<td><p>String</p></td>
+<td><p>“/tmp/file.input”</p></td>
+<td><ul class="simple">
+<li><p>Environment variable value</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>description</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Description</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>inputMode</p></td>
+<td><p>enum</p></td>
+<td><p>REQUIRED</p></td>
+<td><ul class="simple">
+<li><p>Indicates how argument is to be treated when processing individual job requests.</p></li>
+<li><p>Modes: REQUIRED, FIXED, INCLUDE_ON_DEMAND, INCLUDE_BY_DEFAULT</p></li>
+<li><p>Default is INCLUDE_BY_DEFAULT.</p></li>
+<li><p>REQUIRED: Must be provided in a job request or application definition.</p></li>
+<li><p>FIXED: Not overridable in application or job request.</p></li>
+<li><p>INCLUDE_ON_DEMAND: Included if referenced in a job request.</p></li>
+<li><p>INCLUDE_BY_DEFAULT: Included unless <em>include=false</em> in a job request.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>notes</p></td>
+<td><p>String</p></td>
+<td><p>“{}”</p></td>
+<td><ul class="simple">
+<li><p>Simple metadata in the form of a Json object.</p></li>
+<li><p>Not used by Tapis.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="fileinput-attributes-table">
+<h2>FileInput Attributes Table<a class="headerlink" href="#fileinput-attributes-table" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Identifying label associated with the input. Typically used during a job request.</p></li>
+<li><p><strong>Required</strong> at creation time.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>description</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Optional description.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>inputMode</p></td>
+<td><p>enum</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Indicates how input is to be treated when processing individual job requests.</p></li>
+<li><p>REQUIRED, OPTIONAL, FIXED</p></li>
+<li><p>Default is OPTIONAL.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>autoMountLocal</p></td>
+<td><p>boolean</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Indicates if Jobs service should automatically mount file paths into containers.</p></li>
+<li><p>Note that not all container runtimes require this.</p></li>
+<li><p>Setting to FALSE allows user complete control using <em>containerArg</em> parameters.</p></li>
+<li><p>Default is TRUE.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>sourceUrl</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Source used by Jobs service when staging file inputs.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>targetPath</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Target path used by Jobs service when staging file inputs.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="fileinputarray-attributes-table">
+<h2>FileInputArray Attributes Table<a class="headerlink" href="#fileinputarray-attributes-table" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Identifying label associated with the input. Typically used during a job request.</p></li>
+<li><p><strong>Required</strong> at creation time.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>description</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Optional description.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>inputMode</p></td>
+<td><p>enum</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>REQUIRED, OPTIONAL, FIXED</p></li>
+<li><p>Default is OPTIONAL.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>sourceUrls</p></td>
+<td><p>[String]</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Array of sources used by Jobs service when staging file inputs.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>targetDir</p></td>
+<td><p>String</p></td>
+<td></td>
+<td><ul class="simple">
+<li><p>Target directory used by Jobs service when staging file inputs.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="searching">
+<h2>Searching<a class="headerlink" href="#searching" title="Link to this heading">¶</a></h2>
+<p>The service provides a way for users to search for applications based on a list of search conditions provided either as query
+parameters for a GET call or a list of conditions in a request body for a POST call to a dedicated search endpoint.</p>
+<section id="search-using-get">
+<h3>Search using GET<a class="headerlink" href="#search-using-get" title="Link to this heading">¶</a></h3>
+<p>To search when using a GET request to the <code class="docutils literal notranslate"><span class="pre">apps</span></code> endpoint a list of search conditions may be specified
+using a query parameter named <code class="docutils literal notranslate"><span class="pre">search</span></code>. Each search condition must be:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>surrounded with parentheses</p></li>
+<li><p>have three parts separated by the character <code class="docutils literal notranslate"><span class="pre">.</span></code></p></li>
+<li><p>be joined using the character <code class="docutils literal notranslate"><span class="pre">~</span></code>.</p></li>
+</ul>
+</div></blockquote>
+<p>All conditions are combined using logical AND. The general form for specifying the query parameter is as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>?search=(&lt;attribute_1&gt;.&lt;op_1&gt;.&lt;value_1&gt;)~(&lt;attribute_2&gt;.&lt;op_2&gt;.&lt;value_2&gt;)~ ... ~(&lt;attribute_N&gt;.&lt;op_N&gt;.&lt;value_N&gt;)
+</pre></div>
+</div>
+<p>Attribute names are given in the table above and may be specified using Camel Case or Snake Case.</p>
+<p>Supported operators: <code class="docutils literal notranslate"><span class="pre">eq</span></code> <code class="docutils literal notranslate"><span class="pre">neq</span></code> <code class="docutils literal notranslate"><span class="pre">gt</span></code> <code class="docutils literal notranslate"><span class="pre">gte</span></code> <code class="docutils literal notranslate"><span class="pre">lt</span></code> <code class="docutils literal notranslate"><span class="pre">lte</span></code> <code class="docutils literal notranslate"><span class="pre">in</span></code> <code class="docutils literal notranslate"><span class="pre">nin</span></code> <code class="docutils literal notranslate"><span class="pre">like</span></code> <code class="docutils literal notranslate"><span class="pre">nlike</span></code> <code class="docutils literal notranslate"><span class="pre">between</span></code> <code class="docutils literal notranslate"><span class="pre">nbetween</span></code></p>
+<p>Example CURL command to search for applications that have <code class="docutils literal notranslate"><span class="pre">Test</span></code> in the id, are of type FORK and allow for <em>maxJobs</em>
+greater than <code class="docutils literal notranslate"><span class="pre">5</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token: $JWT&quot; https://tacc.tapis.io/v3/apps?search=&quot;(id.like.*Test*)~(job_type.eq.FORK)~(max_jobs.gt.5)&quot;
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>For the <code class="docutils literal notranslate"><span class="pre">like</span></code> and <code class="docutils literal notranslate"><span class="pre">nlike</span></code> operators the wildcard character <code class="docutils literal notranslate"><span class="pre">*</span></code> matches zero or more characters and <code class="docutils literal notranslate"><span class="pre">!</span></code> matches exactly one character.</p></li>
+<li><p>For the <code class="docutils literal notranslate"><span class="pre">between</span></code> and <code class="docutils literal notranslate"><span class="pre">nbetween</span></code> operators the value must be a two item comma separated list of unquoted values.</p></li>
+<li><p>If there is only one condition the surrounding parentheses are optional.</p></li>
+<li><p>In a shell environment the character <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> separating query parameters must be escaped with a backslash.</p></li>
+<li><p>In a shell environment the query value must be surrounded by double quotes and the following characters must be escaped with a backslash in order to be properly interpreted by the shell:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;</span></code> <code class="docutils literal notranslate"><span class="pre">\</span></code> <code class="docutils literal notranslate"><span class="pre">`</span></code></p></li>
+</ul>
+</li>
+<li><p>Attribute names may be specified using Camel Case or Snake Case.</p></li>
+<li><p>Following complex attributes not supported when searching:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">jobAttributes</span></code> <code class="docutils literal notranslate"><span class="pre">notes</span></code></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="dedicated-search-endpoint">
+<h3>Dedicated Search Endpoint<a class="headerlink" href="#dedicated-search-endpoint" title="Link to this heading">¶</a></h3>
+<p>The service provides the dedicated search endpoint <code class="docutils literal notranslate"><span class="pre">apps/search/apps</span></code> for specifying complex queries. Using a GET
+request to this endpoint provides functionality similar to above but with a different syntax. For more complex
+queries a POST request may be used with a request body specifying the search conditions using an SQL-like syntax.</p>
+<section id="search-using-get-on-dedicated-endpoint">
+<h4>Search using GET on Dedicated Endpoint<a class="headerlink" href="#search-using-get-on-dedicated-endpoint" title="Link to this heading">¶</a></h4>
+<p>Sending a GET request to the search endpoint provides functionality very similar to that provided for the endpoint
+<code class="docutils literal notranslate"><span class="pre">apps</span></code> described above. A list of search conditions may be specified using a series of query parameters, one for each attribute.
+All conditions are combined using logical AND. The general form for specifying the query parameters is as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>?&lt;attribute_1&gt;.&lt;op_1&gt;=&lt;value_1&gt;&amp;&lt;attribute_2&gt;.&lt;op_2&gt;=&lt;value_2&gt;)&amp; ... &amp;&lt;attribute_N&gt;.&lt;op_N&gt;=&lt;value_N&gt;
+</pre></div>
+</div>
+<p>Attribute names are given in the table above and may be specified using Camel Case or Snake Case.</p>
+<p>Supported operators: <code class="docutils literal notranslate"><span class="pre">eq</span></code> <code class="docutils literal notranslate"><span class="pre">neq</span></code> <code class="docutils literal notranslate"><span class="pre">gt</span></code> <code class="docutils literal notranslate"><span class="pre">gte</span></code> <code class="docutils literal notranslate"><span class="pre">lt</span></code> <code class="docutils literal notranslate"><span class="pre">lte</span></code> <code class="docutils literal notranslate"><span class="pre">in</span></code> <code class="docutils literal notranslate"><span class="pre">nin</span></code> <code class="docutils literal notranslate"><span class="pre">like</span></code> <code class="docutils literal notranslate"><span class="pre">nlike</span></code> <code class="docutils literal notranslate"><span class="pre">between</span></code> <code class="docutils literal notranslate"><span class="pre">nbetween</span></code></p>
+<p>Example CURL command to search for applications that have <code class="docutils literal notranslate"><span class="pre">Test</span></code> in the id, are of type FORK and allow for <em>maxJobs</em>
+greater than <code class="docutils literal notranslate"><span class="pre">5</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token: $JWT&quot; https://tacc.tapis.io/v3/apps/search/apps?id.like=*Test*\&amp;job_type.eq=FORK\&amp;max_jobs.gt=5
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>For the <code class="docutils literal notranslate"><span class="pre">like</span></code> and <code class="docutils literal notranslate"><span class="pre">nlike</span></code> operators the wildcard character <code class="docutils literal notranslate"><span class="pre">*</span></code> matches zero or more characters and <code class="docutils literal notranslate"><span class="pre">!</span></code> matches exactly one character.</p></li>
+<li><p>For the <code class="docutils literal notranslate"><span class="pre">between</span></code> and <code class="docutils literal notranslate"><span class="pre">nbetween</span></code> operators the value must be a two item comma separated list of unquoted values.</p></li>
+<li><p>In a shell environment the character <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> separating query parameters must be escaped with a backslash.</p></li>
+<li><p>Attribute names may be specified using Camel Case or Snake Case.</p></li>
+<li><p>Following complex attributes not supported when searching:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">jobAttributes</span></code> <code class="docutils literal notranslate"><span class="pre">tags</span></code>  <code class="docutils literal notranslate"><span class="pre">notes</span></code></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="search-using-post-on-dedicated-endpoint">
+<h4>Search using POST on Dedicated Endpoint<a class="headerlink" href="#search-using-post-on-dedicated-endpoint" title="Link to this heading">¶</a></h4>
+<p>More complex search queries are supported when sending a POST request to the endpoint <code class="docutils literal notranslate"><span class="pre">apps/search/apps</span></code>.
+For these requests the request body must contain json with a top level property name of <code class="docutils literal notranslate"><span class="pre">search</span></code>. The
+<code class="docutils literal notranslate"><span class="pre">search</span></code> property must contain an array of strings specifying the search criteria in
+an SQL-like syntax. The array of strings are concatenated to form the full search query.
+The full query must be in the form of an SQL-like <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> clause. Note that not all SQL features are supported.</p>
+<p>For example, to search for apps that are owned by <code class="docutils literal notranslate"><span class="pre">jdoe</span></code> and of type <code class="docutils literal notranslate"><span class="pre">FORK</span></code> or owned by
+<code class="docutils literal notranslate"><span class="pre">jsmith</span></code> and allow for <em>maxJobs</em> less than <code class="docutils literal notranslate"><span class="pre">5</span></code> create a local file named <code class="docutils literal notranslate"><span class="pre">app_search.json</span></code>
+with following json:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;search&quot;</span><span class="p">:</span>
+    <span class="p">[</span>
+      <span class="s2">&quot;(owner = &#39;jdoe&#39; AND job_type = &#39;FORK&#39;) OR&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;(owner = &#39;jsmith&#39; AND max_jobs &lt; 5)&quot;</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To execute the search use a CURL command similar to the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -X POST -H &quot;content-type: application/json&quot; -H &quot;X-Tapis-Token: $JWT&quot; https://tacc.tapis.io/v3/apps/search/apps -d @app_search.json
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>String values must be surrounded by single quotes.</p></li>
+<li><p>Values for BETWEEN must be surrounded by single quotes.</p></li>
+<li><p>Search query parameters as described above may not be used in conjunction with a POST request.</p></li>
+<li><p>SQL features not supported include:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">IS</span> <span class="pre">NULL</span></code> and <code class="docutils literal notranslate"><span class="pre">IS</span> <span class="pre">NOT</span> <span class="pre">NULL</span></code></p></li>
+<li><p>Arithmetic operations</p></li>
+<li><p>Unary operators</p></li>
+<li><p>Specifying escape character for <code class="docutils literal notranslate"><span class="pre">LIKE</span></code> operator</p></li>
+</ul>
+</li>
+</ul>
+<section id="map-of-sql-operators-to-tapis-operators">
+<h5>Map of SQL operators to Tapis operators<a class="headerlink" href="#map-of-sql-operators-to-tapis-operators" title="Link to this heading">¶</a></h5>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Sql Operator</p></th>
+<th class="head"><p>Tapis Operator</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>=</p></td>
+<td><p>eq</p></td>
+</tr>
+<tr class="row-odd"><td><p>&lt;&gt;</p></td>
+<td><p>neq</p></td>
+</tr>
+<tr class="row-even"><td><p>&lt;</p></td>
+<td><p>lt</p></td>
+</tr>
+<tr class="row-odd"><td><p>&lt;=</p></td>
+<td><p>lte</p></td>
+</tr>
+<tr class="row-even"><td><p>&gt;</p></td>
+<td><p>gt</p></td>
+</tr>
+<tr class="row-odd"><td><p>&gt;=</p></td>
+<td><p>gte</p></td>
+</tr>
+<tr class="row-even"><td><p>LIKE</p></td>
+<td><p>like</p></td>
+</tr>
+<tr class="row-odd"><td><p>NOT LIKE</p></td>
+<td><p>nlike</p></td>
+</tr>
+<tr class="row-even"><td><p>BETWEEN</p></td>
+<td><p>between</p></td>
+</tr>
+<tr class="row-odd"><td><p>NOT BETWEEN</p></td>
+<td><p>nbetween</p></td>
+</tr>
+<tr class="row-even"><td><p>IN</p></td>
+<td><p>in</p></td>
+</tr>
+<tr class="row-odd"><td><p>NOT IN</p></td>
+<td><p>nin</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="sort-limit-select-and-listtype">
+<h2>Sort, Limit, Select and ListType<a class="headerlink" href="#sort-limit-select-and-listtype" title="Link to this heading">¶</a></h2>
+<p>When a list of Applications is retrieved the service provides for sorting, filtering and limiting the results.
+By default, only resources owned by you will be included. The service provides a way for you to request that
+all resources accessible to you be included. This is determined by the query parameter <em>listType</em>.</p>
+<p>When retrieving either a list of resources or a single resource the service also provides a way to <em>select</em> which
+fields (i.e. attributes) are included in the results. Sorting, limiting and attribute selection are supported using
+query parameters.</p>
+<section id="selecting">
+<h3>Selecting<a class="headerlink" href="#selecting" title="Link to this heading">¶</a></h3>
+<p>When retrieving applications the fields (i.e. attributes) to be returned may be specified as a comma separated list using
+a query parameter named <code class="docutils literal notranslate"><span class="pre">select</span></code>. Attribute names may be given using Camel Case or Snake Case.</p>
+<p>Notes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Special select keywords are supported: <code class="docutils literal notranslate"><span class="pre">allAttributes</span></code> and <code class="docutils literal notranslate"><span class="pre">summaryAttributes</span></code></p></li>
+<li><p>Summary attributes include:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">version</span></code>, <code class="docutils literal notranslate"><span class="pre">owner</span></code></p></li>
+</ul>
+</li>
+<li><p>By default all attributes are returned when retrieving a single resource via the endpoint apps/&lt;app_id&gt;.</p></li>
+<li><p>By default summary attributes are returned when retrieving a list of applications.</p></li>
+<li><p>Specifying nested attributes is not supported.</p></li>
+<li><p>The attribute <code class="docutils literal notranslate"><span class="pre">id</span></code> is always returned.</p></li>
+</ul>
+</div></blockquote>
+<p>For example, to return only the attributes <code class="docutils literal notranslate"><span class="pre">version</span></code> and <code class="docutils literal notranslate"><span class="pre">containerImage</span></code> the
+CURL command would look like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token: $JWT&quot; https://tacc.tapis.io/v3/apps?select=version,containerImage
+</pre></div>
+</div>
+<p>The response should look similar to the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+   <span class="s2">&quot;result&quot;</span><span class="p">:</span> <span class="p">[</span>
+       <span class="p">{</span>
+           <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;TestApp1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;containerImage&quot;</span><span class="p">:</span> <span class="s2">&quot;containterimage1&quot;</span>
+       <span class="p">},</span>
+       <span class="p">{</span>
+           <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;JobApp1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;containerImage&quot;</span><span class="p">:</span> <span class="s2">&quot;containterimage1&quot;</span>
+       <span class="p">},</span>
+       <span class="p">{</span>
+           <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;JobAppWithInput&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;containerImage&quot;</span><span class="p">:</span> <span class="s2">&quot;containterimage1&quot;</span>
+       <span class="p">},</span>
+       <span class="p">{</span>
+           <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;SleepSeconds&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;containerImage&quot;</span><span class="p">:</span> <span class="s2">&quot;tapis/testapps:main&quot;</span>
+       <span class="p">}</span>
+   <span class="p">],</span>
+   <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;TAPIS_FOUND Apps found: 11 applications&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1-SNAPSHOT&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="s2">&quot;recordCount&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+       <span class="s2">&quot;recordLimit&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+       <span class="s2">&quot;recordsSkipped&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+       <span class="s2">&quot;orderBy&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+       <span class="s2">&quot;startAfter&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+       <span class="s2">&quot;totalCount&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="sorting">
+<h3>Sorting<a class="headerlink" href="#sorting" title="Link to this heading">¶</a></h3>
+<p>The query parameter for sorting is named <code class="docutils literal notranslate"><span class="pre">orderBy</span></code> and the value is the attribute name to sort on with an optional
+sort direction. The general format is <code class="docutils literal notranslate"><span class="pre">&lt;attribute_name&gt;(&lt;dir&gt;)</span></code>. The direction may be <code class="docutils literal notranslate"><span class="pre">asc</span></code> for ascending or
+<code class="docutils literal notranslate"><span class="pre">desc</span></code> for descending. The default direction is ascending.</p>
+<p>Examples:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>orderBy=id</p></li>
+<li><p>orderBy=id(asc)</p></li>
+<li><p>orderBy=name(desc),created</p></li>
+<li><p>orderBy=id(asc),created(desc)</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="limiting">
+<h3>Limiting<a class="headerlink" href="#limiting" title="Link to this heading">¶</a></h3>
+<p>Additional query parameters may be used in order to limit the number and starting point for results. This is useful for
+implementing paging. The query parameters are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">limit</span></code> - Limit number of items returned. For example limit=10.</p>
+<ul>
+<li><p>Use 0 or less for unlimited.</p></li>
+<li><p>Default is 100.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">skip</span></code> - Number of items to skip. For example skip=10.</p>
+<ul>
+<li><p>May not be used with startAfter.</p></li>
+<li><p>Default is 0.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startAfter</span></code> - Where to start when sorting. For example limit=10&amp;orderBy=id(asc),created(desc)&amp;startAfter=101</p>
+<ul>
+<li><p>May not be used with <code class="docutils literal notranslate"><span class="pre">skip</span></code>.</p></li>
+<li><p>Must also specify <code class="docutils literal notranslate"><span class="pre">orderBy</span></code>.</p></li>
+<li><p>The value of <code class="docutils literal notranslate"><span class="pre">startAfter</span></code> applies to the major <code class="docutils literal notranslate"><span class="pre">orderBy</span></code> field.</p></li>
+<li><p>Condition is context dependent. For ascending the condition is value &gt; <code class="docutils literal notranslate"><span class="pre">startAfter</span></code> and for descending the condition is value &lt; <code class="docutils literal notranslate"><span class="pre">startAfter</span></code>.</p></li>
+</ul>
+</li>
+</ul>
+</div></blockquote>
+<p>When implementing paging it is recommend to always use <code class="docutils literal notranslate"><span class="pre">orderBy</span></code> and when possible use <code class="docutils literal notranslate"><span class="pre">limit+startAfter</span></code> rather
+than <code class="docutils literal notranslate"><span class="pre">limit+skip</span></code>. Sorting should always be included since returned results are not guaranteed to be in the same order
+for each call. The combination of <code class="docutils literal notranslate"><span class="pre">limit+startAfter</span></code> is preferred because <code class="docutils literal notranslate"><span class="pre">limit+skip</span></code> is more likely to result in
+inconsistent results as records are added and removed. Using <code class="docutils literal notranslate"><span class="pre">limit+startAfter</span></code> works best when the attribute has a
+natural sequential ordering such as when an attribute represents a timestamp or a sequential ID.</p>
+</section>
+<section id="listtype">
+<h3>ListType<a class="headerlink" href="#listtype" title="Link to this heading">¶</a></h3>
+<p>By default, you will only see the resources that you own. The query parameter <em>listType</em> allows you to see additional
+resources that are available to you.</p>
+<p>Options:</p>
+<dl class="simple">
+<dt><em>OWNED</em></dt><dd><p>Include only items owned by you (Default)</p>
+</dd>
+<dt><em>SHARED_PUBLIC</em></dt><dd><p>Include only items shared publicly</p>
+</dd>
+<dt><em>ALL</em></dt><dd><p>Include all items you are authorized to view.</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="tapis-responses">
+<h2>Tapis Responses<a class="headerlink" href="#tapis-responses" title="Link to this heading">¶</a></h2>
+<p>For requests that return a list of resources the response result object will contain the list of resource records that
+match the user’s query and the response metadata object will contain information related to sorting and limiting.</p>
+<p>The metadata object will contain the following information:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">recordCount</span></code> - Actual number of records returned.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">recordLimit</span></code> - The limit query parameter specified in the request. -1 if query parameter was not specified.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">recordsSkipped</span></code> - The skip query parameter specified in the request. -1 if query parameter was not specified.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">orderBy</span></code> - The orderBy query parameter specified in the request. Empty string if query parameter was not specified.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startAfter</span></code> - The startAfter query parameter specified in the request. Empty string if query parameter was not specified.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">totalCount</span></code> - Total number of records that would have been returned without a limit query parameter being imposed. -1 if total count was not computed.</p></li>
+</ul>
+</div></blockquote>
+<p>For performance reasons computation of <code class="docutils literal notranslate"><span class="pre">totalCount</span></code> is only determined on demand. This is controlled by the boolean
+query parameter <code class="docutils literal notranslate"><span class="pre">computeTotal</span></code>. By default <code class="docutils literal notranslate"><span class="pre">computeTotal</span></code> is <em>false</em>.</p>
+<p>Example query and response:</p>
+<p>Query:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl -H &quot;X-Tapis-Token: $JWT&quot; https://tacc.tapis.io/v3/apps?limit=2&amp;orderBy=id(desc)
+</pre></div>
+</div>
+<p>Response:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+   <span class="s2">&quot;result&quot;</span><span class="p">:</span> <span class="p">[</span>
+       <span class="p">{</span>
+           <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;TestApp1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;testuser2&quot;</span>
+       <span class="p">},</span>
+       <span class="p">{</span>
+           <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;tacc-sample-app&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.1&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;testuser2&quot;</span>
+       <span class="p">}</span>
+   <span class="p">],</span>
+   <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;TAPIS_FOUND Apps found: 2 applications&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1-SNAPSHOT&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="s2">&quot;recordCount&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+       <span class="s2">&quot;recordLimit&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+       <span class="s2">&quot;recordsSkipped&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+       <span class="s2">&quot;orderBy&quot;</span><span class="p">:</span> <span class="s2">&quot;id(desc)&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;startAfter&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+       <span class="s2">&quot;totalCount&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+   <span class="p">}</span>
+ <span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/tapis-project/source/technical/apps.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

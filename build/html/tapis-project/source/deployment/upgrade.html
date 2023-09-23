@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Upgrading Tapis &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="upgrading-tapis">
+<span id="upgrade"></span><h1>Upgrading Tapis<a class="headerlink" href="#upgrading-tapis" title="Link to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This guide is for users wanting to deploy Tapis software in their own datacenter. Researchers who
+simply want to make use of the Tapis APIs do not need to deploy any Tapis components and can ignore
+this guide.</p>
+</div>
+<p>In this section, we cover the process of upgrading an existing Tapis installation. In general,
+the process of upgrading a Tapis installation involves all of the same steps described in the <a class="reference external" href="deployer.html">Tapis
+Deployer</a> section, but a careful comparison of the new version of the
+generated Tapis deployment script directory against the previous version must be done to
+verify that the changes will work in your environment. At a high level, the process is:</p>
+<ol class="arabic simple">
+<li><p>Check out the updated version of Tapis Deployer from the repository.</p></li>
+<li><p>Check the Deployer CHANGELOG to compare the current version deployed in your site against the
+newer version. Breaking changes are identified explicitly as are newly required configuration
+variables.</p></li>
+<li><p>Run the generate script to generate an updated version of the deployment script directory and
+compare the difference between this version and the currently deployed version of the deployment
+script directory. Note and review any differences.</p></li>
+</ol>
+<ol class="arabic simple" start="5">
+<li><p>Use the deployment control scripts to start/update the newer versions of the Tapis services in
+your pre-production environment first. Perform QA in the pre-production environment.</p></li>
+<li><p>Deploy to production.</p></li>
+</ol>
+<section id="breaking-deployment-changes">
+<h2>Breaking Deployment Changes<a class="headerlink" href="#breaking-deployment-changes" title="Link to this heading">¶</a></h2>
+<p>In this section, we call out some specific types of breaking changes to be aware of. This section does not
+discuss breaking code changes within the Tapis services themselves, but rather changes within a deployment
+configuration that could break an existing installation. Also, this list is not meant to
+be a comprehensive – operators should always review the entire list of changes in the Deployer and
+Tapis CHANGLOGs.</p>
+<section id="vault-storage-type">
+<h3>Vault Storage Type<a class="headerlink" href="#vault-storage-type" title="Link to this heading">¶</a></h3>
+<p>There are two possible storage types for the Vault database – <em>file</em> and <em>Raft</em>. Early versions of
+Deployer defaulted to using “file” storage for Vault, however, this option proved to be suboptimal
+for different reasons (e.g., less amenable to automated backups). Newer versions of Deployer use
+the <em>Raft</em> storage type, and we recommend existing deployments that are using <em>file</em> to change to
+<em>Raft</em>. However, changing from <em>file</em> to <em>Raft</em> requires a special, manual process to be performed.
+We outline the steps involved in the <a class="reference external" href="vault.html">Tapis Vault</a> section.</p>
+<p>The Tapis Deployer variable to look for is <code class="docutils literal notranslate"><span class="pre">vault_raft_storage</span></code>, a boolean, with default value <cite>true</cite>.
+If you need to use the <em>file</em> storage type, be sure to override the default in your host vars.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Attempting to deploy the Tapis Vault with a different storage type could result in secret loss
+and permanent corruption of the Tapis installation.</p>
+</div>
+</section>
+<section id="pvc-names">
+<h3>PVC Names<a class="headerlink" href="#pvc-names" title="Link to this heading">¶</a></h3>
+<p>Tapis uses Persistent Volument Claims (PVCs) to persist data stored in data bases and message brokers.
+Each Tapis service has a set of these PVCs that it uses. You can see the set of PVCs in your deployment
+by using <code class="docutils literal notranslate"><span class="pre">kubectl</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">kubectl get pvc</span>
+
+<span class="go">NAME                           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE</span>
+<span class="go">actors-mongo-backup-vol01      Bound    pvc-fbb44e18-0256-4d0b-b799-a703b0f477b6   10Gi       RWO            rbd-new        2d1h</span>
+<span class="go">actors-mongo-vol01             Bound    pvc-d3c224eb-5930-4700-8b8a-5f1ae0f2a921   40Gi       RWO            rbd-new        2d1h</span>
+<span class="go">actors-rabbitmq-vol01          Bound    pvc-20dc6e04-e2bb-48b6-8647-ee28081eb0c3   20Gi       RWO            rbd-new        47h</span>
+<span class="go">apps-postgres-vol01            Bound    pvc-f1320b94-6069-41d3-a26a-91a3ebaaed21   20Gi       RWO            rbd-new        2d1h</span>
+<span class="go">authenticator-ldap-vol01       Bound    pvc-05ae6dbb-e46d-4383-af6b-f1d2726d6529   10Gi       RWO            rbd-new        5d21h</span>
+<span class="go">. . .</span>
+</pre></div>
+</div>
+<p>The output above shows the name of each PVC in the first column, e.g., <code class="docutils literal notranslate"><span class="pre">actors-mongo-backup-vol01</span></code>,
+<code class="docutils literal notranslate"><span class="pre">apps-postgres-vol01</span></code>, <code class="docutils literal notranslate"><span class="pre">authenticator-ldap-vol01</span></code>, etc. It is very important to check that the
+names of the PVCs specified within the deployment script directory match those within your cluster.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Deploying Tapis services with different PVC names could result in data loss.</p>
+</div>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/tapis-project/source/deployment/upgrade.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

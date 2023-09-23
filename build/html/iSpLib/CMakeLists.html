@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>set (CMAKE_CUDA_FLAGS “${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}”) &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=cb25574f" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <p>cmake_minimum_required(VERSION 3.10)
+project(torchsparse)
+set(CMAKE_CXX_STANDARD 14)
+set(TORCHSPARSE_VERSION 0.6.16)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)</p>
+<p>option(WITH_CUDA “Enable CUDA support” OFF)
+option(WITH_PYTHON “Link to Python when building” ON)
+option(WITH_METIS “Enable METIS support” OFF)</p>
+<p>if(WITH_CUDA)
+enable_language(CUDA)
+add_definitions(-D__CUDA_NO_HALF_OPERATORS__)
+add_definitions(-DWITH_CUDA)
+set(CMAKE_CUDA_FLAGS “${CMAKE_CUDA_FLAGS} –expt-relaxed-constexpr”)
+endif()</p>
+<p>if (WITH_PYTHON)
+add_definitions(-DWITH_PYTHON)
+find_package(Python3 COMPONENTS Development)
+endif()
+find_package(Torch REQUIRED)</p>
+<p>if (WITH_METIS)
+add_definitions(-DWITH_METIS)
+find_package(METIS)
+endif()</p>
+<p>file(GLOB HEADERS csrc/<em>.h)
+file(GLOB OPERATOR_SOURCES csrc/</em>.* csrc/cpu/<em>.</em>)
+if(WITH_CUDA)
+file(GLOB OPERATOR_SOURCES ${OPERATOR_SOURCES} csrc/cuda/<em>.h csrc/cuda/</em>.cu)
+endif()</p>
+<p>add_library(${PROJECT_NAME} SHARED ${OPERATOR_SOURCES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${TORCH_LIBRARIES})
+if (WITH_PYTHON)
+target_link_libraries(${PROJECT_NAME} PRIVATE Python3::Python)
+endif()
+if (WITH_METIS)
+target_include_directories(${PROJECT_NAME} PRIVATE ${METIS_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${METIS_LIBRARIES})
+endif()
+find_package(OpenMP)
+if (OPENMP_FOUND)
+set (CMAKE_C_FLAGS “${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}”)
+set (CMAKE_CXX_FLAGS “${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}”)</p>
+<section id="set-cmake-cuda-flags-cmake-cuda-flags-xcompiler-openmp-cxx-flags">
+<h1>set (CMAKE_CUDA_FLAGS “${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}”)<a class="headerlink" href="#set-cmake-cuda-flags-cmake-cuda-flags-xcompiler-openmp-cxx-flags" title="Link to this heading">¶</a></h1>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>set (CMAKE_EXE_LINKER_FLAGS &quot;${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}&quot;)
+</pre></div>
+</div>
+<p>endif()
+set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME TorchSparse)</p>
+<p>target_include_directories(${PROJECT_NAME} INTERFACE
+$&lt;BUILD_INTERFACE:${HEADERS}&gt;
+$&lt;INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}&gt;)</p>
+<p>include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)</p>
+<p>set(PHMAP_DIR third_party/parallel-hashmap)
+target_include_directories(${PROJECT_NAME} PRIVATE ${PHMAP_DIR})</p>
+<p>set(TORCHSPARSE_CMAKECONFIG_INSTALL_DIR “share/cmake/TorchSparse” CACHE STRING “install path for TorchSparseConfig.cmake”)</p>
+<p>configure_package_config_file(cmake/TorchSparseConfig.cmake.in
+“${CMAKE_CURRENT_BINARY_DIR}/TorchSparseConfig.cmake”
+INSTALL_DESTINATION ${TORCHSPARSE_CMAKECONFIG_INSTALL_DIR})</p>
+<p>write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/TorchSparseConfigVersion.cmake
+VERSION ${TORCHSPARSE_VERSION}
+COMPATIBILITY AnyNewerVersion)</p>
+<p>install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TorchSparseConfig.cmake
+${CMAKE_CURRENT_BINARY_DIR}/TorchSparseConfigVersion.cmake
+DESTINATION ${TORCHSPARSE_CMAKECONFIG_INSTALL_DIR})</p>
+<p>install(TARGETS ${PROJECT_NAME}
+EXPORT TorchSparseTargets
+LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)</p>
+<p>install(EXPORT TorchSparseTargets
+NAMESPACE TorchSparse::
+DESTINATION ${TORCHSPARSE_CMAKECONFIG_INSTALL_DIR})</p>
+<p>install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+install(FILES
+csrc/cpu/convert_cpu.h
+csrc/cpu/diag_cpu.h
+csrc/cpu/metis_cpu.h
+csrc/cpu/rw_cpu.h
+csrc/cpu/saint_cpu.h
+csrc/cpu/sample_cpu.h
+csrc/cpu/spmm_cpu.h
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/cpu)
+if(WITH_CUDA)
+install(FILES
+csrc/cuda/convert_cuda.h
+csrc/cuda/diag_cuda.h
+csrc/cuda/rw_cuda.h
+csrc/cuda/spmm_cuda.h
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/cuda)
+endif()</p>
+<p>if(WITH_CUDA)
+set_property(TARGET torch_cuda PROPERTY INTERFACE_COMPILE_OPTIONS “”)
+set_property(TARGET torch_cpu PROPERTY INTERFACE_COMPILE_OPTIONS “”)
+endif()</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tapis-project/README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/iSpLib/CMakeLists.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

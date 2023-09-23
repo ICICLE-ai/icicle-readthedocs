@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Local Install Script Example &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="local-install-script-example">
+<h1>Local Install Script Example<a class="headerlink" href="#local-install-script-example" title="Link to this heading">¶</a></h1>
+<p>This directory contains the files to install a very simple “Hello World”
+program into your home directory using a user/local install script.</p>
+<section id="example-software">
+<h2>Example Software<a class="headerlink" href="#example-software" title="Link to this heading">¶</a></h2>
+<p>The tar file in this directory contains the source code and build files for a very simple software package. The package builds a single shared library, which defines a “Hello World” function, and a single executable, which links against the library and calls the function.</p>
+</section>
+<section id="install-script">
+<h2>Install Script<a class="headerlink" href="#install-script" title="Link to this heading">¶</a></h2>
+<p>In this directory you will find the file <code class="docutils literal notranslate"><span class="pre">install-osc.sh</span></code>. It was derived from</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">users</span><span class="o">/</span><span class="n">PZS0645</span><span class="o">/</span><span class="n">support</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">install</span><span class="o">-</span><span class="n">script</span><span class="o">/</span><span class="n">install</span><span class="o">-</span><span class="n">osc_sample</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>When you go about trying to “locally” install software, you can start by
+copying that sample file and modifying it to suit your purposes. In this case,
+we modified:</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">initialize</span></code> command: to have the software name (hello) and version (1.0)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VERIFY_FILES</span></code>: to check that the <code class="docutils literal notranslate"><span class="pre">hello</span></code> executable is correctly installed</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">obtains_src</span></code>, <code class="docutils literal notranslate"><span class="pre">setup_step</span></code>, <code class="docutils literal notranslate"><span class="pre">configure_step</span></code>, <code class="docutils literal notranslate"><span class="pre">make_step</span></code>, and <code class="docutils literal notranslate"><span class="pre">make_install_step</span></code>: to obtain and build our software (in general, you should read the documentation/README included with your software to determine what commands to execute in these steps; it is often some variation on <code class="docutils literal notranslate"><span class="pre">wget</span></code>, <code class="docutils literal notranslate"><span class="pre">tar</span></code>, <code class="docutils literal notranslate"><span class="pre">./configure</span> <span class="pre">--prefix=...</span></code>, <code class="docutils literal notranslate"><span class="pre">make</span></code>, <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generate_module_file</span></code>: to make the module file set the necessary paths for our executable to function correctly
+For most software installs, you will need to make similar modifications to the sample file.</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<p>To install the <code class="docutils literal notranslate"><span class="pre">hello</span></code> package, copy the entire <code class="docutils literal notranslate"><span class="pre">example</span></code> directory and execute the install script. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cp ~support/share/install-script/example ~/example -r
+$ cd ~/example
+$ ./install-osc.sh
+[omitted output]
+</pre></div>
+</div>
+<p>This will install the software and module file under <code class="docutils literal notranslate"><span class="pre">~/osc_apps</span></code> (creating the
+directory structure if it doesn’t exist). You can now use the software by
+loading the module:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ module use ~/osc_apps/lmodfiles # execute each session to use all your module files
+$ module load hello
+$ hello
+Hello World!
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tapis-project/README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/harp/install-script-source/example/README.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Tapis Vault &#8212; ICICLE-READTHEDOCS  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="tapis-vault">
+<span id="vault"></span><h1>Tapis Vault<a class="headerlink" href="#tapis-vault" title="Link to this heading">¶</a></h1>
+<style> .red {color:#FF4136; font-weight:bold; font-size:20px} </style><hr class="docutils" />
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This guide is for users wanting to deploy Tapis software in their own datacenter. Researchers who
+simply want to make use of the Tapis APIs do not need to deploy any Tapis components and can ignore
+this guide.</p>
+</div>
+<section id="introduction-to-tapis-vault">
+<h2>Introduction to Tapis Vault<a class="headerlink" href="#introduction-to-tapis-vault" title="Link to this heading">¶</a></h2>
+<p>Tapis stores all its secrets in an instance of <a class="reference external" href="https://www.hashicorp.com/products/vault">Hashicorp Vault</a>.  It is critical that access to Vault is tightly controlled and its secret content safeguarded.  The only Tapis component that interactes directly with Vault is the <a class="reference external" href="../technical/security.html">Security Kernel</a> and its associated utility programs.</p>
+<p>When planning a Tapis installation, one should consider the tradeoff between automation and robust secret management.  In highly automated environments like Kubernetes, services are automatically restarted when they fail or need to be moved between nodes.  This level of automation requires writing at least one secret on some software accessible disk.  On the other hand, Vault initialization is geared toward having a human in the loop to execute its unseal protocol and to protect high value tokens.</p>
+<p>Tapis supports two levels of Vault automation.  When running in a Kubernetes cluster, Vault’s unseal keys and a long-lived token are written to disk on the control plane.  Kubernetes accesses these secrets when it initializes a new Vault instance or it needs to restart Vault.  These secrets are protected by the operating system’s account and access control mechanisms; if those mechanisms are compromised, the Vault’s contents are vulnerable.</p>
+<p>Tapis also supports deploying Vault outside a Kubernetes cluster while the rest of Tapis runs in the cluster.  In this configuration, a data center can deploy Vault to meet its local security policies and standards, including limiting administrative access to Vault, running Vault in a physically secure location, employing a hardware security module, etc.</p>
+<p>In the following two sections we discuss how the community version of Vault can be run inside Kubernetes and run on a VM outside of Kubernetes.  In both cases, Vault needs to be installed, certains capabilities need to be enabled, Tapis-specific policies and roles need to be created, and administrative processes need to be put in place.  Other configurations, such as running enterprise Vault or sharing Vault with other applications, are not covered, but information from this discussion can be adapted to other configurations.</p>
+</section>
+<section id="deploying-vault-in-kubernetes">
+<h2>Deploying Vault in Kubernetes<a class="headerlink" href="#deploying-vault-in-kubernetes" title="Link to this heading">¶</a></h2>
+<p>Using <a class="reference external" href="./deployer.html">Tapis Deployer</a>, Tapis’s <a class="reference external" href="https://github.com/tapis-project/tapis-deployer/blob/main/playbooks/roles/baseburnup/templates/kube/burnup">top-level burnup script</a> configures and initializes Vault early in the deployment process.  The <a class="reference external" href="https://github.com/tapis-project/tapis-deployer/blob/main/playbooks/roles/vault/templates/kube/burnup">Vault burnup script</a> executes from the Kubernetes control plane and performs these tasks:</p>
+<ul>
+<li><p>Configures Vault’s network and site location</p></li>
+<li><p>Configures Vault storage</p></li>
+<li><p>Creates and initializes Vault (new installations only)</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Creates <em>vault</em> file containing unseal keys and root token</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Creates <em>vault-token</em> file containing root token from <em>vault</em> file (if necessary)</p></li>
+<li><p>Pushes unseal keys and root token to Kubernetes secrets</p></li>
+<li><p>Starts the Vault pod and unseals it (if necessary)</p></li>
+</ul>
+<p>The deployer scripts detect the <em>vault</em> file to determine whether Vault has been installed.  This file along with the <em>vault-token</em> file are placed in user’s home directory by default, but this can be changed.</p>
+<p>At this point, a Vault docker image is running in a Kubernetes pod and deployment scripts have written the unseal keys and the root token to files.  These secrets are also written to Kubernetes secrets to make them available to pods and jobs.  Kubernetes has all the secret information needed to restart Vault whenever it detects a failure or needs to move the pod.  This automation comes at the cost of having sensitive Vault secrets on disk in the Kubernetes control plane.</p>
+<p>The next phase initializes the Vault with Tapis roles, policies and secrets using the SkAdmin utility program.  SkAdmin secrets management capabilities is discussed in depth in its own <a class="reference external" href="secrets.html">topic</a>, but here we’ll focus on its role during Vault initialization.</p>
+<p>SkAdmin connects to Vault with administrative permissions so that is can set up Tapis’s <a class="reference external" href="https://github.com/tapis-project/tapis-deployer/tree/main/playbooks/roles/skadmin/templates/kube/tapis-vault/policies/sk">standard policies</a> and its <a class="reference external" href="https://github.com/tapis-project/tapis-deployer/tree/main/playbooks/roles/skadmin/templates/kube/tapis-vault/policies/sk-admin">administrative policies</a>.
+SkAdmin also sets up Tapis’s <a class="reference external" href="https://github.com/tapis-project/tapis-deployer/blob/main/playbooks/roles/skadmin/templates/kube/tapis-vault/roles/sk-role.json">standard roles</a> and its <a class="reference external" href="https://github.com/tapis-project/tapis-deployer/blob/main/playbooks/roles/skadmin/templates/kube/tapis-vault/roles/sk-admin-role.json">administrative roles</a>.</p>
+<p>Once SkAdmin completes setting up Tapis’s roles and policies, Vault is ready to accept Tapis service and user secrets.  See the <a class="reference external" href="secrets.html">secrets discussion</a> for details.</p>
+</section>
+<section id="deploying-vault-outside-of-kubernetes">
+<h2>Deploying Vault Outside of Kubernetes<a class="headerlink" href="#deploying-vault-outside-of-kubernetes" title="Link to this heading">¶</a></h2>
+<p>The procedure below describes how to build a Vault VM on Linux, which we’ll call “<strong>tapis-vault</strong>”.  This procedure can also be used as a template for building Vault instances in other environments and follows the same general outline as dicussed above for Kubernetes environments.</p>
+<p>Important security characteristics of the VM installation approach are:</p>
+<ul class="simple">
+<li><p>No Vault tokens are ever stored on the VM’s disk.</p></li>
+<li><p>No unseal keys are ever stored on VM’s disk.</p></li>
+</ul>
+<p><em>The reason not to store these secrets on the Vault machine is because even if the root user is compromised, Vault secrets are inaccessible unless Vault is unsealed and the attacker has a valid token.</em></p>
+<p>That said, automation inside Kubernetes will typically require a scoped token to start the Security Kernel and that token will most likely be saved in the control plane.</p>
+<p>We assume the installation uses the open source version of Hashicorp Vault, so we do not have access to Vault’s enterprise features.  Tapis has been tested with Vault v1.8.3 and we assume a version compatible with that is being used.</p>
+<p>The procedure can be split into two phases.  The first phase requires command line access to the Vault host as root.  The second phase can be performed remotely using the Vault REST APIs and a root token.</p>
+<section id="phase-i-command-line-execution">
+<h3>PHASE I - Command Line Execution<a class="headerlink" href="#phase-i-command-line-execution" title="Link to this heading">¶</a></h3>
+<p><strong>Step 1 - Acquire A VM</strong></p>
+<p>Acquire a VM with a TLS certificate installed.  We’ll use the fictitious domain “<strong>mydomain.com</strong>” for illustrative purposes.</p>
+<p><strong>Step 2 - Install Hashicorp Vault</strong></p>
+<p>SSH into target VM as root.  Follow installation instructions for your package manager to natively install Vault:</p>
+<p><a class="reference external" href="https://learn.hashicorp.com/tutorials/vault/getting-started-install?in=vault/getting-started">https://learn.hashicorp.com/tutorials/vault/getting-started-install?in=vault/getting-started</a></p>
+<p><a class="reference external" href="https://developer.hashicorp.com/vault/docs/install">https://developer.hashicorp.com/vault/docs/install</a></p>
+<p><strong>Step 3 - Change Private Key Access</strong></p>
+<p>Now that Vault is installed, change the group of the private key to “vault” and allow group read.  Here are example commands:</p>
+<div class="line-block">
+<div class="line"><em>chgrp vault /etc/pki/tls/private/tapis-vault-key.20230403</em></div>
+<div class="line"><em>chmod 640 /etc/pki/tls/private/tapis-vault-key.20230403</em></div>
+</div>
+<p>It’s also a good idea to create /etc/pki/tls/certs/README.VAULT explaining the steps you took to customize your VM.</p>
+<p><strong>Step 4 - Configure Vault for RAFT Storage</strong></p>
+<p>Save the original /etc/vault.d/vault.hcl.  Update /etc/vault.d/vault.hcl to use the RAFT backend.  Here are contents of an example vault.hcl file that can provide a template for your configuration:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Full configuration options can be found at https://www.vaultproject.io/docs/configuration</span>
+
+<span class="n">ui</span> <span class="o">=</span> <span class="n">true</span>
+
+<span class="n">disable_mlock</span> <span class="o">=</span> <span class="n">true</span>
+
+<span class="n">cluster_addr</span>  <span class="o">=</span> <span class="s2">&quot;https://tapis-vault.mydomain.com:8201&quot;</span>
+<span class="n">api_addr</span>      <span class="o">=</span> <span class="s2">&quot;https://tapis-vault.mydomain.com:8200&quot;</span>
+
+<span class="n">storage</span> <span class="s2">&quot;raft&quot;</span> <span class="p">{</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/opt/vault/data&quot;</span>
+    <span class="n">node_id</span> <span class="o">=</span> <span class="s2">&quot;node_1&quot;</span>
+<span class="p">}</span>
+
+<span class="c1"># HTTPS listener</span>
+<span class="n">listener</span> <span class="s2">&quot;tcp&quot;</span> <span class="p">{</span>
+    <span class="n">address</span>       <span class="o">=</span> <span class="s2">&quot;0.0.0.0:8200&quot;</span>
+    <span class="n">tls_cert_file</span> <span class="o">=</span> <span class="s2">&quot;/etc/pki/tls/certs/certchain.pem&quot;</span>
+    <span class="n">tls_key_file</span>  <span class="o">=</span> <span class="s2">&quot;/etc/pki/tls/private/tapis-vault-key.20230403&quot;</span>
+    <span class="n">tls_client_ca_file</span> <span class="o">=</span> <span class="s2">&quot;/etc/pki/tls/certs/certchain.pem&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Vault information about using the RAFT protocol can be found <a class="reference external" href="https://developer.hashicorp.com/vault/docs/internals/integrated-storage">here</a>.</p>
+<p><strong>Step 5 - Start Vault</strong></p>
+<div class="line-block">
+<div class="line"><em>systemctl enable vault.service</em></div>
+<div class="line"><em>systemctl start  vault.service</em></div>
+<div class="line"><em>systemctl status vault.service</em></div>
+</div>
+<p>Test the installation (customize for your hostname):</p>
+<div class="line-block">
+<div class="line"><em>export VAULT_ADDR=https://tapis-vault.mydomain.com:8200</em></div>
+<div class="line"><em>vault status</em></div>
+</div>
+<p><strong>Step 6 - Initialize Vault</strong></p>
+<p><em>vault operator init</em></p>
+<p>Five <em>unseal keys</em> and the <em>root token</em> will be written to the screen.  DO NOT SAVE THESE DATA PERMANENTLY ON THE FILE SYSTEM.  Instead, copy the information off the screen and save them securely off the VM.</p>
+<p><strong>Step 7 - Unseal Vault</strong>
+The Vault requires 3 out of the 5 of the unseal keys to unseal.  Issue the operator unseal call 3 times, each time using a different key.</p>
+<div class="line-block">
+<div class="line"><em>vault operator unseal</em></div>
+<div class="line"><em>vault status</em></div>
+</div>
+<p><strong>Step 8 - Export Root Token</strong>
+To avoid saving the root token to the command history file:</p>
+<div class="line-block">
+<div class="line"><em>export HISTCONTROL=ignorespace</em></div>
+<div class="line-block">
+<div class="line"><em>export VAULT_TOKEN=xxx</em></div>
+</div>
+</div>
+<p>where the command has a leading space and xxx is the token output by the above operator init command.</p>
+<p><strong>Step 9 - Enable Authn Methods and Secrets Engines</strong></p>
+<div class="line-block">
+<div class="line"><em>vault secrets enable -version=2 -path=secret kv</em></div>
+<div class="line"><em>vault auth enable approle</em></div>
+<div class="line"><em>vault auth enable userpass</em></div>
+</div>
+<p><strong>Step 10 - Check Remote Access</strong></p>
+<p>Before logging off, test remote access by running a status command that will be used in Phase II.  On the remote machine, export the root token.</p>
+<p>To avoid saving the root token to the command history file:</p>
+<div class="line-block">
+<div class="line"><em>export HISTCONTROL=ignorespace</em></div>
+<div class="line-block">
+<div class="line"><em>export VAULT_TOKEN=xxx</em></div>
+</div>
+<div class="line"><em>curl -H “X-Vault-Token: $VAULT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/sys/health | jq</em></div>
+</div>
+<p><strong>Step 11 - Logoff VM (optional)</strong></p>
+<p>All further configuration will be performed from the remote machine.</p>
+</section>
+<section id="phase-ii-remote-commands">
+<h3>PHASE II - Remote Commands<a class="headerlink" href="#phase-ii-remote-commands" title="Link to this heading">¶</a></h3>
+<p><strong>Step 12 - Create SK Roles</strong></p>
+<p>On the remote machine terminal, export the root VAULT_TOKEN as shown in Step 10.  Clone the <a class="reference external" href="https://github.com/tapis-project/tapis-vault-vm">tapis-vault-vm</a> git repo into the current directory.</p>
+<div class="line-block">
+<div class="line"><em>git clone https://github.com/tapis-project/tapis-vault-vm.git</em></div>
+<div class="line"><em>cd tapis-vault-vm</em></div>
+</div>
+<div class="line-block">
+<div class="line"><em>curl -X POST -H “X-Vault-Token: $VAULT_TOKEN” –data &#64;roles/sk-role.json https://tapis-vault.mydomain.com:8200/v1/auth/approle/role/sk</em></div>
+</div>
+<div class="line-block">
+<div class="line"><em>curl -X POST -H “X-Vault-Token: $VAULT_TOKEN” –data &#64;roles/sk-admin-role.json https://tapis-vault.mydomain.com:8200/v1/auth/approle/role/sk-admin</em></div>
+</div>
+<p><strong>Step 13 - Test SK Roles (optional)</strong></p>
+<div class="line-block">
+<div class="line"><em>curl -s -X POST -H “X-Vault-Token: $VAULT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/auth/approle/role/sk/secret-id | jq</em></div>
+</div>
+<div class="line-block">
+<div class="line"><em>curl -X GET -H “X-Vault-Token: $VAULT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/auth/approle/role/sk/role-id | jq</em></div>
+</div>
+<p><strong>Step 14 - Create Roles and Policies</strong></p>
+<p>The tapis-vault/CreatePolicies.sh script encapsulates basic policy and role creation needed for Tapis to function.  See comments in the script for details, but basically the script requires:</p>
+<ul class="simple">
+<li><p>The current directory to be tapis-vault.</p></li>
+<li><p>The VAULT_TOKEN environment variable be set to a root token.</p></li>
+<li><p>The DNS name of the new Vault VM be provided on the command line.</p></li>
+<li><p>Requirements 1 and 2 where already set in the previous two steps, so an invocation of the script looks like this (but with your VM):</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><em>./CreatePolicies.sh tapis-vault.mydomain.com</em></div>
+</div>
+<p><strong>Step 15 - View Roles (optional)</strong>
+Each of the roles referenced in CreatePolicies.sh should be returned.</p>
+<div class="line-block">
+<div class="line"><em>curl -H “X-Vault-Token: $VAULT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/auth/approle/role/sk | jq</em></div>
+</div>
+<div class="line-block">
+<div class="line"><em>curl -H “X-Vault-Token: $VAULT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/auth/approle/role/sk-admin | jq</em></div>
+</div>
+<p><strong>Step 16 - View Policies (optional)</strong></p>
+<p>Each of the policies listed in CreatePolicies.sh should be returned.</p>
+<div class="line-block">
+<div class="line"><em>curl -s -H “X-Vault-Token: $VAULT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/sys/policy | jq</em></div>
+</div>
+<div class="line-block">
+<div class="line"><em>curl -s -H “X-Vault-Token: $VAULT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/sys/policy/tapis/sk-acl | jq</em></div>
+</div>
+<p><strong>Step 17 - Create tapisroot Token</strong></p>
+<p>The tapisroot token is a root token that should be used instead of the original root token generated by Vault.  It tapisroot gets compromised it can easily be revoked and replaced.</p>
+<p>Create a file named tapisroot.json with the content:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="s2">&quot;tapisroot&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;policies&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;root&quot;</span> <span class="p">],</span>
+    <span class="s2">&quot;ttl&quot;</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Run this command:</p>
+<div class="line-block">
+<div class="line"><em>curl -X POST -s -H “X-Vault-Token: $VAULT_TOKEN” –data &#64;tapisroot.json https://tapis-vault.mydomain.com:8200/v1/auth/token/create | jq</em></div>
+</div>
+<p>Save the returned “client_token” in a secure place, such as stache or wherever you saved the original root token and unseal keys.</p>
+<p><strong>Step 18 - Test tapisroot Token (optional)</strong></p>
+<p>To avoid saving the root token to the command history file:</p>
+<div class="line-block">
+<div class="line"><em>export HISTCONTROL=ignorespace</em></div>
+<div class="line-block">
+<div class="line"><em>export TAPIS_ROOT_TOKEN=xxx</em></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line"><em>curl -X GET -H “X-Vault-Token: $TAPIS_ROOT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/auth/approle/role/sk/role-id | jq</em></div>
+</div>
+<div class="line-block">
+<div class="line"><em>curl -s -X POST -H “X-Vault-Token: $TAPIS_ROOT_TOKEN” https://tapis-vault.mydomain.com:8200/v1/auth/approle/role/sk/secret-id | jq</em></div>
+</div>
+<p><strong>Step 19 - Remove Secrets from History</strong></p>
+<p>Remove any commands that leaked secrets into the history file.  Enter “history” to see the numbered history records.  To remove by line number:</p>
+<div class="line-block">
+<div class="line"><em>history -d &lt;line number&gt;</em></div>
+</div>
+</section>
+</section>
+<section id="vault-backup">
+<h2>Vault Backup<a class="headerlink" href="#vault-backup" title="Link to this heading">¶</a></h2>
+<p>Tapis configures Vault to run with the <a class="reference external" href="https://developer.hashicorp.com/vault/docs/internals/integrated-storage">raft</a> storage type by default, which allows Vault to operate normally while its database is backed up.  Vault provides these two administrative <a class="reference external" href="https://developer.hashicorp.com/vault/docs/commands/operator/raft">commands</a> to save and restore backups:</p>
+<ul class="simple">
+<li><p><em>vault operator raft snapshot save &lt;outfile&gt;</em></p></li>
+<li><p><em>vault operator raft snapshot restore &lt;infile&gt;</em></p></li>
+</ul>
+<p>Tapis fills the gap in Vault’s community edition support by automating periodic backups in Vault VM environments.  The <a class="reference external" href="https://github.com/tapis-project/tapis-vaultbackup">tapis-vaultbackup</a> repository contains a backup utility program’s source code and documentation.  The program can be started in a secure manner to periodically takes snapshots of the Vault database (once a day by default).  The program runs as a daemon until it’s shutdown.  Typically, a separate cron job is set up to copy the backup files from the VM to one or more remote data stores as local policy dictates.</p>
+<p>The program is written in Java and packaged as a self-contained executable.  The executable is then packaged into an rpm for use on operating systems that support that package manager.  There are no plans to support other package managers or container runtimes, but everything needed for such support is available in the repository.</p>
+</section>
+<section id="vault-export">
+<h2>Vault Export<a class="headerlink" href="#vault-export" title="Link to this heading">¶</a></h2>
+<p>The SkExport utility program provides a quick way to extract many Tapis secrets from Vault.  The output is written to stdout as either JSON data or key/value pairs.  One use of this program is to acquire Tapis service secrets and then to inject them into docker containers as environment variables.  SkExport <a class="reference external" href="https://github.com/tapis-project/tapis-security/tree/dev/tapis-securitylib/src/main/java/edu/utexas/tacc/tapis/security/commands/aux/export">source code</a> is part of the Security Kernel library and is available as a docker <a class="reference external" href="https://hub.docker.com/repository/docker/tapis/securityexport/general">image</a>.</p>
+<p>SkExport parameters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SkExport</span> <span class="p">[</span><span class="n">options</span><span class="o">...</span><span class="p">]</span>
+ <span class="o">-</span><span class="nb">format</span> <span class="p">(</span><span class="o">--</span><span class="nb">format</span><span class="p">)</span> <span class="p">[</span><span class="n">JSON</span> <span class="o">|</span> <span class="n">ENV</span><span class="p">]</span> <span class="p">:</span> <span class="n">JSON</span> <span class="n">writes</span> <span class="n">raw</span> <span class="n">Vault</span> <span class="n">data</span><span class="p">,</span> <span class="n">ENV</span> <span class="n">writes</span> <span class="n">key</span><span class="o">=</span><span class="n">value</span> <span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="n">ENV</span><span class="p">)</span>
+ <span class="o">-</span><span class="n">help</span> <span class="p">(</span><span class="o">--</span><span class="n">help</span><span class="p">)</span>                  <span class="p">:</span> <span class="n">display</span> <span class="n">help</span> <span class="n">information</span> <span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="n">false</span><span class="p">)</span>
+ <span class="o">-</span><span class="n">nosan</span> <span class="p">(</span><span class="o">--</span><span class="n">nosanitize</span><span class="p">)</span>           <span class="p">:</span> <span class="n">don</span><span class="s1">&#39;&#39;</span><span class="n">t</span> <span class="n">replace</span> <span class="n">unsupported</span> <span class="n">characters</span> <span class="k">with</span> <span class="n">underscore</span> <span class="n">when</span> <span class="o">-</span><span class="nb">format</span><span class="o">=</span><span class="n">ENV</span> <span class="p">(</span><span class="n">default</span> <span class="ow">is</span> <span class="n">to</span> <span class="n">sanitize</span><span class="p">)</span>
+ <span class="o">-</span><span class="n">noskip</span> <span class="p">(</span><span class="o">--</span><span class="n">noskipusersecrets</span><span class="p">)</span>   <span class="p">:</span> <span class="n">don</span><span class="s1">&#39;&#39;</span><span class="n">t</span> <span class="n">skip</span> <span class="n">user</span> <span class="n">secrets</span> <span class="p">(</span><span class="n">default</span> <span class="ow">is</span> <span class="n">to</span> <span class="n">skip</span><span class="p">)</span>
+ <span class="o">-</span><span class="n">quote</span> <span class="p">(</span><span class="o">--</span><span class="n">quoteenv</span><span class="p">)</span>             <span class="p">:</span> <span class="n">enclose</span> <span class="n">secret</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">single</span> <span class="n">quotes</span> <span class="n">when</span> <span class="o">-</span><span class="nb">format</span><span class="o">=</span><span class="n">ENV</span> <span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="n">false</span><span class="p">)</span>
+ <span class="o">-</span><span class="n">v</span> <span class="p">(</span><span class="o">--</span><span class="n">verbose</span><span class="p">)</span>                  <span class="p">:</span> <span class="n">output</span> <span class="n">statistics</span> <span class="ow">in</span> <span class="n">addition</span> <span class="n">to</span> <span class="n">secrets</span> <span class="p">(</span><span class="n">default</span> <span class="n">no</span> <span class="n">statistics</span><span class="p">)</span>
+ <span class="o">-</span><span class="n">vtok</span> <span class="p">(</span><span class="o">--</span><span class="n">vaulttoken</span><span class="p">)</span> <span class="n">VAL</span>        <span class="p">:</span> <span class="n">Vault</span> <span class="n">token</span> <span class="k">with</span> <span class="n">proper</span> <span class="n">authorization</span>
+ <span class="o">-</span><span class="n">vurl</span> <span class="p">(</span><span class="o">--</span><span class="n">vaulturl</span><span class="p">)</span> <span class="n">VAL</span>          <span class="p">:</span> <span class="n">Vault</span> <span class="n">URL</span> <span class="n">including</span> <span class="n">port</span><span class="p">,</span> <span class="n">ex</span><span class="p">:</span> <span class="n">http</span><span class="p">(</span><span class="n">s</span><span class="p">):</span><span class="o">//</span><span class="n">host</span><span class="p">:</span><span class="mi">32342</span>
+</pre></div>
+</div>
+<section id="running-skexport">
+<h3>Running SkExport<a class="headerlink" href="#running-skexport" title="Link to this heading">¶</a></h3>
+<p>The easiest way to execute SkExport is to run its docker image.  The <em>-vtok</em> and <em>-vurl</em> parameters are required.  Here’s an example of how to export the tapis service secrets (user and system secrets are skipped) in environment variable format with the values single quoted:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">SKEXPORT_PARMS</span><span class="o">=</span><span class="s1">&#39;-quote -vtok xxxx -vurl https://tapis-vault.mydomain.com:8200&#39;</span>
+<span class="n">docker</span> <span class="n">run</span> <span class="o">--</span><span class="n">env</span> <span class="n">SKEXPORT_PARMS</span> <span class="n">tapis</span><span class="o">/</span><span class="n">securityexport</span>
+</pre></div>
+</div>
+<p>This example outputs JSON data:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">SKEXPORT_PARMS</span><span class="o">=</span><span class="s1">&#39;-format=JSON -vtok xxxx -vurl https://tapis-vault.mydomain.com:8200&#39;</span>
+<span class="n">docker</span> <span class="n">run</span> <span class="o">--</span><span class="n">env</span> <span class="n">SKEXPORT_PARMS</span> <span class="n">tapis</span><span class="o">/</span><span class="n">securityexport</span>
+</pre></div>
+</div>
+<p>Since a token with at least as much authorization as the Security Kernel’s token must be used to extract secrets from Vault, and since secrets are being output in the clear, it’s important to take proper security precautions when using SkExport.  These precautions include not leaving tokens or secrets in files and deleting sensitive information from the command line history file.</p>
+</section>
+</section>
+<section id="revoke-regenerating-vault-root-tokens">
+<h2>Revoke / Regenerating Vault Root Tokens<a class="headerlink" href="#revoke-regenerating-vault-root-tokens" title="Link to this heading">¶</a></h2>
+<p>Revoking and regenerating Vault Root Tokens is standard practice for Vault.</p>
+<p>Thanks to these sources for providing details for the procedures.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.greenreedtech.com/identifying-active-hashicorp-vault-root-tokens/">Identifying Active Hashicorp Vault Root Tokens</a></p></li>
+<li><p><a class="reference external" href="https://developer.hashicorp.com/vault/tutorials/operations/generate-root">Generate Root Token</a></p></li>
+</ul>
+<p>Examples of UUIDs, tokens, passwords are randomized below.</p>
+<p><strong>Step 1 - Make a Backup</strong></p>
+<p>Ensure you have a good backup of your Vault before proceeding.</p>
+<p><strong>Step 2 - Generate New Root Token</strong></p>
+<p>Generate a one-time-password:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># vault operator generate-root -init</span>
+<span class="n">A</span> <span class="n">One</span><span class="o">-</span><span class="n">Time</span><span class="o">-</span><span class="n">Password</span> <span class="n">has</span> <span class="n">been</span> <span class="n">generated</span> <span class="k">for</span> <span class="n">you</span> <span class="ow">and</span> <span class="ow">is</span> <span class="n">shown</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">OTP</span> <span class="n">field</span><span class="o">.</span>
+<span class="n">You</span> <span class="n">will</span> <span class="n">need</span> <span class="n">this</span> <span class="n">value</span> <span class="n">to</span> <span class="n">decode</span> <span class="n">the</span> <span class="n">resulting</span> <span class="n">root</span> <span class="n">token</span><span class="p">,</span> <span class="n">so</span> <span class="n">keep</span> <span class="n">it</span> <span class="n">safe</span><span class="o">.</span>
+<span class="n">Nonce</span>         <span class="mi">8</span><span class="n">af5de52</span><span class="o">-</span><span class="mi">0</span><span class="n">da3</span><span class="o">-</span><span class="mi">4896</span><span class="o">-</span><span class="n">ab9f</span><span class="o">-</span><span class="mi">6</span><span class="n">f0f291f31dc</span>
+<span class="n">Started</span>       <span class="n">true</span>
+<span class="n">Progress</span>      <span class="mi">0</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">Complete</span>      <span class="n">false</span>
+<span class="n">OTP</span>           <span class="mi">199273364</span><span class="n">d410af3c520c9460d</span>
+<span class="n">OTP</span> <span class="n">Length</span>    <span class="mi">26</span>
+</pre></div>
+</div>
+<p>Use the OTP &amp; unseal keys to generate an Encoded Token. You must enter 3 different unseal keys:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vault</span> <span class="n">operator</span> <span class="n">generate</span><span class="o">-</span><span class="n">root</span>
+
+<span class="c1"># vault operator generate-root</span>
+<span class="n">Operation</span> <span class="n">nonce</span><span class="p">:</span> <span class="mi">8</span><span class="n">af5de52</span><span class="o">-</span><span class="mi">0</span><span class="n">da3</span><span class="o">-</span><span class="mi">4896</span><span class="o">-</span><span class="n">ab9f</span><span class="o">-</span><span class="mi">6</span><span class="n">f0f291f31dc</span>
+<span class="n">Unseal</span> <span class="n">Key</span> <span class="p">(</span><span class="n">will</span> <span class="n">be</span> <span class="n">hidden</span><span class="p">):</span>
+<span class="n">Nonce</span>       <span class="mi">8</span><span class="n">af5de52</span><span class="o">-</span><span class="mi">0</span><span class="n">da3</span><span class="o">-</span><span class="mi">4896</span><span class="o">-</span><span class="n">ab9f</span><span class="o">-</span><span class="mi">6</span><span class="n">f0f291f31dc</span>
+<span class="n">Started</span>     <span class="n">true</span>
+<span class="n">Progress</span>    <span class="mi">1</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">Complete</span>    <span class="n">false</span>
+
+<span class="c1"># vault operator generate-root</span>
+<span class="n">Operation</span> <span class="n">nonce</span><span class="p">:</span> <span class="mi">8</span><span class="n">af5de52</span><span class="o">-</span><span class="mi">0</span><span class="n">da3</span><span class="o">-</span><span class="mi">4896</span><span class="o">-</span><span class="n">ab9f</span><span class="o">-</span><span class="mi">6</span><span class="n">f0f291f31dc</span>
+<span class="n">Unseal</span> <span class="n">Key</span> <span class="p">(</span><span class="n">will</span> <span class="n">be</span> <span class="n">hidden</span><span class="p">):</span>
+<span class="n">Nonce</span>       <span class="mi">8</span><span class="n">af5de52</span><span class="o">-</span><span class="mi">0</span><span class="n">da3</span><span class="o">-</span><span class="mi">4896</span><span class="o">-</span><span class="n">ab9f</span><span class="o">-</span><span class="mi">6</span><span class="n">f0f291f31dc</span>
+<span class="n">Started</span>     <span class="n">true</span>
+<span class="n">Progress</span>    <span class="mi">2</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">Complete</span>    <span class="n">false</span>
+
+<span class="c1"># vault operator generate-root</span>
+<span class="n">Operation</span> <span class="n">nonce</span><span class="p">:</span> <span class="mi">8</span><span class="n">af5de52</span><span class="o">-</span><span class="mi">0</span><span class="n">da3</span><span class="o">-</span><span class="mi">4896</span><span class="o">-</span><span class="n">ab9f</span><span class="o">-</span><span class="mi">6</span><span class="n">f0f291f31dc</span>
+<span class="n">Unseal</span> <span class="n">Key</span> <span class="p">(</span><span class="n">will</span> <span class="n">be</span> <span class="n">hidden</span><span class="p">):</span>
+<span class="n">Nonce</span>            <span class="mi">8</span><span class="n">af5de52</span><span class="o">-</span><span class="mi">0</span><span class="n">da3</span><span class="o">-</span><span class="mi">4896</span><span class="o">-</span><span class="n">ab9f</span><span class="o">-</span><span class="mi">6</span><span class="n">f0f291f31dc</span>
+<span class="n">Started</span>          <span class="n">true</span>
+<span class="n">Progress</span>         <span class="mi">3</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">Complete</span>         <span class="n">true</span>
+<span class="n">Encoded</span> <span class="n">Token</span>    <span class="n">cd7dc17b468d1c4d0754446b7fe6008aXy1</span>
+</pre></div>
+</div>
+<p>Decode the encoded token using the OTP:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># vault operator generate-root -decode=cd7dc17b468d1c4d0754446b7fe6008aXy1 -otp=199273364d410af3c520c9460d</span>
+<span class="n">s</span><span class="mf">.4</span><span class="n">f31f8b4380afdf78a0c4f2b</span>
+</pre></div>
+</div>
+<p>Note the New Root Token (<em>s.4f31f8b4380afdf78a0c4f2b</em>).</p>
+<p><strong>Step 3 - Find and Revoke the Old Root Token</strong></p>
+<p>In the vault container, list Accessors. There may be several.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># vault list auth/token/accessors</span>
+<span class="n">Keys</span>
+<span class="o">----</span>
+<span class="mf">31e7</span><span class="n">d2f9d581f43758635169</span>
+<span class="mi">0</span><span class="n">a8511c58fdfffa7edea60e9</span>
+<span class="n">aa1faa246e2e4346bc6364d3</span>
+<span class="mi">8</span><span class="n">fea0ebb035d3ffdcc8a5e36</span>
+</pre></div>
+</div>
+<p>You can use this to look the information for each accessor.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># vault list -format json auth/token/accessors | jq -r .[] | xargs -I &#39;{}&#39; vault token lookup -format json -accessor &#39;{}&#39; | jq -r &#39;select(.data.policies | any(. == &quot;root&quot;))&#39;</span>
+</pre></div>
+</div>
+<p>For each accessor look for their creation time to identify the one you want to revoke:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># vault token lookup -format json -accessor 0a8511c58fdfffa7edea60e9 | grep creation
+    &quot;creation_time&quot;: 1607701202,
+    &quot;creation_ttl&quot;: 0,
+
+# vault token lookup -format json -accessor aa1faa246e2e4346bc6364d3 | grep creation
+    &quot;creation_time&quot;: 1684427946,
+
+$ date -d @1607701202
+Fri Dec 11 09:40:02 CST 2021
+
+$ date -d @1684427946
+Thu May 18 11:39:06 CDT 2023
+</pre></div>
+</div>
+<p>We see that token <em>0a8511c58fdfffa7edea60e9</em> is the 2-year-old one so that’s the one to revoke.</p>
+<p>Revoke the old token:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># vault token revoke -accessor 0a8511c58fdfffa7edea60e9
+Success! Revoked token (if it existed)
+</pre></div>
+</div>
+<p>Confirm the old one no longer works:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># vault list -format json auth/token/accessors
+Error listing auth/token/accessors: Error making API request.
+
+URL: GET http://127.0.0.1:8200/v1/auth/token/accessors?list=true
+Code: 403. Errors:
+* permission denied
+</pre></div>
+</div>
+<p>Verify the new one works:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># export VAULT_TOKEN=s.4f31f8b4380afdf78a0c4f2b</span>
+<span class="c1"># vault list -format json auth/token/accessors</span>
+<span class="p">[</span>
+  <span class="s2">&quot;aa1faa246e2e4346bc6364d3&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;31e7d2f9d581f43758635169&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;8fea0ebb035d3ffdcc8a5e36&quot;</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Note the old one is missing.</p>
+<p><strong>Step 4 - Setup Tapis to Use the new Root Token</strong></p>
+<ul>
+<li><p>Use burndown script to stop vault.</p></li>
+<li><p>Move the old {tapisdatadir}/vault/vault-token out of the way (e.g. <cite>mv vault-token vault-token-20230627-backup</cite>)</p></li>
+<li><p>Update vault-token file with new root token.</p></li>
+<li><p>Delete vault secrets so they will be recreated.
+- kubectl delete secret vault-keys
+- kubectl delete secret vault-token</p></li>
+<li><p>Use burnup script to start vault.</p></li>
+<li><p>Restart Security Api. (Go to {tapisdir}/security/api and use the burndown &amp; burnup scripts.)</p></li>
+<li><p>Confirm that the sk and vault secrets are just recently recreated:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># kubectl get secret | grep vault</span>
+<span class="n">tapis</span><span class="o">-</span><span class="n">sk</span><span class="o">-</span><span class="n">vault</span><span class="o">-</span><span class="n">secrets</span>              <span class="n">Opaque</span>                                <span class="mi">2</span>      <span class="mi">15</span><span class="n">s</span>
+<span class="n">vault</span><span class="o">-</span><span class="n">keys</span>                          <span class="n">Opaque</span>                                <span class="mi">3</span>      <span class="mi">2</span><span class="n">m19s</span>
+<span class="n">vault</span><span class="o">-</span><span class="n">token</span>                         <span class="n">Opaque</span>                                <span class="mi">1</span>      <span class="mi">2</span><span class="n">m20s</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, ICICLE.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/tapis-project/source/deployment/vault.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
