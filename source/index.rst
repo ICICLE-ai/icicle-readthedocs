@@ -3,12 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ICICLE-READTHEDOCS's documentation!
+Software and Cyberinfrastructure
 ==============================================
 
+New to ICICLE CI Catalog
+#########################
+Intelligent Cyberinfrastructure
+###################################
+
+AI Foundations
+***************
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+  /ICICLE_Foodshed_parser/README.md
 
 
 
