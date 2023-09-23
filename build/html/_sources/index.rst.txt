@@ -9,7 +9,7 @@ Software and Cyberinfrastructure
 New to ICICLE CI Catalog
 #########################
 Intelligent Cyberinfrastructure
-############################
+###################################
 
 AI Foundations
 ***************
@@ -17,7 +17,9 @@ AI Foundations
    :maxdepth: 2
    :caption: Contents:
 
-  /ICICLE_Foodshed_parser/README.md
+  ./ICICLE_Foodshed_Parser/README.md
+  ./test.rst
+  ./md.md
 
 
 

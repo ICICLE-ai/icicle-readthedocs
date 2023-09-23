@@ -17,8 +17,9 @@ AI Foundations
    :maxdepth: 2
    :caption: Contents:
 
-  /ICICLE_Foodshed_parser/README.md
-  
+  ./ICICLE_Foodshed_Parser/README.md
+  ./test.rst
+  ./md.md
 
 
 
