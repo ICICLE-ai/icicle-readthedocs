@@ -39,7 +39,7 @@ Smart Foodsheds
 - :ref:`Persons-Projects-Organizations-Datasets_California (PPOD_CA) Knowledge Graph v23.06 <PPOD_CA>`
     - PPOD_CA is a knowledge graph of PPOD information describing connections between environmental conservation and the food system in California. 
 - :ref:`Kroger Store Closure v0.1 <Store_Closure_Website>`
-    - This prototype web application provides users with an engaging and interactive platform to explore an agent-based model. The model allows for dynamic simulations and captures the complex interactions between different types of households and markets. By utilizing this model, users can gain valuable insights into the food insecurity levels experienced by various types of households. For more inforamtion please visit 'Store_Closure_Website'_
+    - This prototype web application provides users with an engaging and interactive platform to explore an agent-based model. The model allows for dynamic simulations and captures the complex interactions between different types of households and markets. By utilizing this model, users can gain valuable insights into the food insecurity levels experienced by various types of households. For more inforamtion please visit Store_Closure_Website_.
 
 .. _Store_Closure_Website: https://github.com/ICICLE-ai/Store_Closure_Website
 
