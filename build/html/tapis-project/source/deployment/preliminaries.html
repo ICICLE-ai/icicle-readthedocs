@@ -1,36 +1,82 @@
 <!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-<html lang="en" data-content_root="../../../">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
-
-    <title>Considerations and Prerequisites &#8212; ICICLE-READTHEDOCS  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=cb25574f" />
-    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Considerations and Prerequisites &mdash; ICICLE-READTHEDOCS  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-   
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
           
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ICICLE-READTHEDOCS
+              <img src="https://aiinstitutes.org/wp-content/uploads/2022/07/icicle.jpeg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/ICICLE_Foodshed_Parser.html">Constrained Language Models Yield Few-Shot Semantic Parsers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/PPOD_CA.html">PPOD_CA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/Region2vec.html">Region2vec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/Species-Classification-Multimodal-Context.html">Species Classification using Multimodal Heterogeneous Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/Species-Classification-Multimodal-Context.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/Store_Closure_Website.html">Store_Closure_Website (Version 1)</a></li>
+</ul>
 
-          <div class="body" role="main">
-            
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ICICLE-READTHEDOCS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Considerations and Prerequisites</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/tapis-project/source/deployment/preliminaries.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <section id="considerations-and-prerequisites">
-<span id="preliminaries"></span><h1>Considerations and Prerequisites<a class="headerlink" href="#considerations-and-prerequisites" title="Link to this heading">¶</a></h1>
+<span id="preliminaries"></span><h1>Considerations and Prerequisites<a class="headerlink" href="#considerations-and-prerequisites" title="Link to this heading"></a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This guide is for users wanting to deploy Tapis software in their own datacenter. Researchers who
@@ -49,7 +95,7 @@ reduce the time required to get to a working Tapis installation that meets your 
 <p>We strongly recommend consulting with the Tapis core team to plan your deployment and operations.</p>
 </div>
 <section id="site-type">
-<h2>Site Type<a class="headerlink" href="#site-type" title="Link to this heading">¶</a></h2>
+<h2>Site Type<a class="headerlink" href="#site-type" title="Link to this heading"></a></h2>
 <p>Tapis supports geographically distributed deployments where different components are
 running in different data centers and managed by different institutions. These
 physically isolated installations of Tapis software are referred to as  <em>sites</em>.
@@ -72,7 +118,7 @@ tapis.io domain. If you are interested in deploying an associate site as part of
 please contact us.</p>
 </section>
 <section id="kubernetes">
-<h2>Kubernetes<a class="headerlink" href="#kubernetes" title="Link to this heading">¶</a></h2>
+<h2>Kubernetes<a class="headerlink" href="#kubernetes" title="Link to this heading"></a></h2>
 <p>The official Tapis installation scripts target Kubernetes for container orchestration. In the future,
 support for using Docker Compose instead of Kubernetes will be added. For now, a Kubernetes cluster is
 required to deploy Tapis using the official installation software.</p>
@@ -81,7 +127,7 @@ of Kubernetes concepts and abstractions, including Jobs, Deployments, PVCs, and 
 Introduction to and administration of Kubernetes is beyond the scope of this document.</p>
 </section>
 <section id="environments-and-capacity-planning">
-<h2>Environments and Capacity Planning<a class="headerlink" href="#environments-and-capacity-planning" title="Link to this heading">¶</a></h2>
+<h2>Environments and Capacity Planning<a class="headerlink" href="#environments-and-capacity-planning" title="Link to this heading"></a></h2>
 <p>Deploying Tapis requires dedicated capacity in your Kubernetes cluster. A minimum of two Tapis
 installations for each site is required to allow updates to be applied in a pre-production environment
 before impacting production services.</p>
@@ -120,13 +166,13 @@ requirements are strongly recommended:</p>
 </ul>
 </div></blockquote>
 <section id="namespaces">
-<h3>Namespaces<a class="headerlink" href="#namespaces" title="Link to this heading">¶</a></h3>
+<h3>Namespaces<a class="headerlink" href="#namespaces" title="Link to this heading"></a></h3>
 <p>As mentioned above, each Tapis environment/installation must be deployed into its own, dedicated Kubernetes
 namespace. Uniqueness assumptions made by the deployment architecture and scripts imply that attempting to
 deploy multiple Tapis instances into the same Kubernetes namespace will result in failures.</p>
 </section>
 <section id="roles-permissions-and-service-accounts">
-<h3>Roles, Permissions and Service Accounts<a class="headerlink" href="#roles-permissions-and-service-accounts" title="Link to this heading">¶</a></h3>
+<h3>Roles, Permissions and Service Accounts<a class="headerlink" href="#roles-permissions-and-service-accounts" title="Link to this heading"></a></h3>
 <p>The Tapis deployment scripts utilize the <code class="docutils literal notranslate"><span class="pre">kubectl</span></code> command-line utility to register jobs, pods
 PVCs, secrets, services, and other objects. Registering these objects requires certain permissions
 at the Kubernetes level. Additionally, some, but not all, Tapis jobs and pods use the Kubernetes
@@ -156,7 +202,7 @@ Tapis (that use the Deployer burnup and burndown scripts) versus the privileges
 needed by the Kubernetes jobs and deployments (i.e., the service account described in Step 2 above).</p>
 </section>
 <section id="public-ip-addresses-domains-and-tls-certificates">
-<h3>Public IP Addresses, Domains and TLS Certificates<a class="headerlink" href="#public-ip-addresses-domains-and-tls-certificates" title="Link to this heading">¶</a></h3>
+<h3>Public IP Addresses, Domains and TLS Certificates<a class="headerlink" href="#public-ip-addresses-domains-and-tls-certificates" title="Link to this heading"></a></h3>
 <p>All Tapis services respond to HTTP requests made to a configurable domain assigned to a site, called
 the “site domain”. By default, each
 tenant is defined to a subdomain of the site domain. For example, the primary site at TACC has domain tapis.io,
@@ -198,7 +244,7 @@ generate its own certificates using LetsEncrypt will be added in a future releas
 </section>
 </section>
 <section id="tenants-authenticators">
-<h2>Tenants &amp; Authenticators<a class="headerlink" href="#tenants-authenticators" title="Link to this heading">¶</a></h2>
+<h2>Tenants &amp; Authenticators<a class="headerlink" href="#tenants-authenticators" title="Link to this heading"></a></h2>
 <p>Every site must include a minimum of two tenants to function: an administrative tenant for the site, where
 the Tapis services running at that site authenticate and manage authorization (roles, permissions, etc.)
 and other service data, and one or more user tenants where actual users interact with Tapis.</p>
@@ -229,7 +275,7 @@ configured to make use of the test LDAP server for a special user tenant, referr
 tenant. The tenant id for the site’s “dev” tenant can be provided to the deployment tools.</p>
 </section>
 <section id="deployer">
-<h2>Deployer<a class="headerlink" href="#deployer" title="Link to this heading">¶</a></h2>
+<h2>Deployer<a class="headerlink" href="#deployer" title="Link to this heading"></a></h2>
 <p>The official Tapis installation scripts are based on the Ansible project and are available in the
 <a class="reference external" href="https://github.com/tapis-project/tapis-deployer">Tapis Deployer repository</a>. Deployment of Tapis
 using the official scripts involves the following high-level steps:</p>
@@ -245,7 +291,7 @@ environment (for example, the machine that has access to the Kubernetes API).</p
 </ol>
 </section>
 <section id="additional-requirements-for-an-initial-associate-site-deployment">
-<h2>Additional Requirements for an Initial Associate Site Deployment<a class="headerlink" href="#additional-requirements-for-an-initial-associate-site-deployment" title="Link to this heading">¶</a></h2>
+<h2>Additional Requirements for an Initial Associate Site Deployment<a class="headerlink" href="#additional-requirements-for-an-initial-associate-site-deployment" title="Link to this heading"></a></h2>
 <p>Some additional setup is required at the primary site before an associate site can be created.
 These steps include:</p>
 <ol class="arabic simple">
@@ -258,80 +304,31 @@ associate site deployment.</p>
 </section>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, ICICLE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">ICICLE-READTHEDOCS</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html">HARP - HPC Application Runtime Predictor</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../harp/README.html#acknowledgements">Acknowledgements</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html">iSpLib - An Intelligent Sparse Library</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../iSpLib/README.html#acknowledgements">Acknowledgements</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Software Architecture and Design</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../README.html">Base ICICLE Tapis Software - Tapis is a hosted, web-based API framework for securely managing computational workloads across infrastructure and institutions so that experts can focus on their research instead of the technology.</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html">Event Engine</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../event-engine/README.html#acknowledgement">Acknowledgement</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../hello_icicle_auth_clients/README.html">Hello ICICLE Authentication Clients - Hello ICICLE Authentication consists of two command line interface (CLI) tools to authenticate with the Tapis Pods service. The first tool, ICICONSOLE, is specifically tailored to working with Neo4j databases hosted through the Tapis Pods. The second tool, TapisCL-ICICLE, allows the user to manage, operate, and interactively explore Tapis services.</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2023, ICICLE.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../../_sources/tapis-project/source/deployment/preliminaries.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

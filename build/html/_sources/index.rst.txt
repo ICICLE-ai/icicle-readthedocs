@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Software and Cyberinfrastructure
+Software and Cyberinfrastructure - Updated
 ==============================================
 
 .. toctree::
@@ -42,25 +42,3 @@ Smart Foodsheds
     - This prototype web application provides users with an engaging and interactive platform to explore an agent-based model. The model allows for dynamic simulations and captures the complex interactions between different types of households and markets. By utilizing this model, users can gain valuable insights into the food insecurity levels experienced by various types of households. For more inforamtion please visit Store_Closure_Website_.
 
 .. _Store_Closure_Website: https://github.com/ICICLE-ai/Store_Closure_Website
-
-
-
-Release 2023-04
-#########################
-Intelligent Cyberinfrastructure
-###################################
-
-.. toctree::
-  :caption: AI for CI-for-AI
-  :maxdepth: 1
-
-  HPC Application Runtime Predictor <harp/README.md>
-  Intelligent Sparse Library <iSpLib/README.md>
-
-.. toctree::
-  :caption: Software Architecture and Design
-  :maxdepth: 1
-
-  Base ICICLE Tapis Software <tapis-project/README.rst>
-  Event Engine <event-engine/README.md>
-  Hello ICICLE Authentication Clients <hello_icicle_auth_clients/README.md>
