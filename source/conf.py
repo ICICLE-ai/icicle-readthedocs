@@ -27,9 +27,11 @@ author = 'ICICLE'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["myst_parser", 'sphinx.ext.autosectionlabel',]
+extensions = ["myst_parser", 'sphinx.ext.autosectionlabel','sphinx_rtd_theme']
 
 autosectionlabel_prefix_document = True
+
+html_theme = "sphinx_rtd_theme"
 
 source_suffix = {
     '.rst': 'restructuredtext',
