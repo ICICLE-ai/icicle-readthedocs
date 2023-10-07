@@ -56,8 +56,7 @@ html_theme = "sphinx_rtd_theme"
 html_logo = "https://aiinstitutes.org/wp-content/uploads/2022/07/icicle.jpeg"
 
 html_theme_options = {
-    'logo_only': True,
-    'titles_only': True
+    'logo_only': True
 }
 
 
