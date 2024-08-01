@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Region2vec &mdash; ICICLE-READTHEDOCS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Species Classification using Multimodal Heterogeneous Context" href="Species-Classification-Multimodal-Context.html" />
+    <link rel="prev" title="PPOD_CA" href="PPOD_CA.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="https://aiinstitutes.org/wp-content/uploads/2022/07/icicle.jpeg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">AI for CI-for-AI</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ICICLE_Foodshed_Parser.html">Constrained Language Models Yield Few-Shot Semantic Parsers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PPOD_CA.html">PPOD_CA</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Region2vec</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#paper">Paper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#acknowledgement">Acknowledgement</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Species-Classification-Multimodal-Context.html">Species Classification using Multimodal Heterogeneous Context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Store_Closure_Website.html">Store_Closure_Website (Version 1)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ICICLE-READTHEDOCS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Region2vec</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/Region2vec.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="region2vec">
+<span id="id1"></span><h1>Region2vec<a class="headerlink" href="#region2vec" title="Link to this heading"></a></h1>
+<p>Region2vec: Community Detection on Spatial Networks Using Graph Embedding with Node Attributes and Spatial Interactions</p>
+<p><img alt="Region2vec" src="https://github.com/GeoDS/Region2vec/blob/master/Region2Vec_Workflow.jpg" /></p>
+<p><strong>Abstract:</strong>
+Community Detection algorithms are used to detect densely connected components in complex networks and reveal underlying relationships among components. As a special type of networks, spatial networks are usually generated by the connections among geographic regions. Identifying the spatial network communities can help reveal the spatial interaction patterns, understand the hidden regional structures and support regional development decision-making. Given the recent development of Graph Convolutional Networks (GCN) and its powerful performance in identifying multi-scale spatial interactions, we proposed an unsupervised GCN-based community detection method “region2vec” on spatial networks. Our method first generates node embeddings for regions that share common attributes and have intense spatial interactions, and then applies clustering algorithms to detect communities based on their embedding similarity and geographic adjacency. Experimental results show that while existing methods trade off either attribute similarities or spatial interactions for one another, “region2vec” maintains a great balance between both and performs the best when one wants to maximize both attribute similarities and spatial interactions within communities.</p>
+<section id="paper">
+<h2>Paper<a class="headerlink" href="#paper" title="Link to this heading"></a></h2>
+<p>If you find our code useful for your research, you may cite our paper:</p>
+<p><em>Liang, Y., Zhu, J., Ye, W., and Gao, S.. (2022).  <a class="reference external" href="https://arxiv.org/abs/2210.08041">Region2vec: Community Detection on Spatial Networks Using Graph Embedding with Node Attributes and Spatial Interactions</a>. In Proceedings of 30th ACM SIGSPATIAL International Conference on Advances in Geographic Information Systems
+(ACM SIGSPATIAL 2022), November 1-4, 2022, Seattle, WA, USA. DOI: https://doi.org/10.1145/3557915.3560974</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@inproceedings</span><span class="p">{</span><span class="n">liang2022regions2vec</span><span class="p">,</span>
+  <span class="n">title</span><span class="o">=</span><span class="p">{</span><span class="n">Region2vec</span><span class="p">:</span> <span class="n">Community</span> <span class="n">Detection</span> <span class="n">on</span> <span class="n">Spatial</span> <span class="n">Networks</span> <span class="n">Using</span> <span class="n">Graph</span> <span class="n">Embedding</span> <span class="k">with</span> <span class="n">Node</span> <span class="n">Attributes</span> <span class="ow">and</span> <span class="n">Spatial</span> <span class="n">Interactions</span><span class="p">},</span>
+  <span class="n">author</span><span class="o">=</span><span class="p">{</span><span class="n">Liang</span><span class="p">,</span> <span class="n">Yunlei</span> <span class="ow">and</span> <span class="n">Zhu</span><span class="p">,</span> <span class="n">Jiawei</span> <span class="ow">and</span> <span class="n">Ye</span><span class="p">,</span> <span class="n">Wen</span> <span class="ow">and</span> <span class="n">Gao</span><span class="p">,</span> <span class="n">Song</span> <span class="p">},</span>
+  <span class="n">booktitle</span><span class="o">=</span><span class="p">{</span><span class="n">Proceedings</span> <span class="n">of</span> <span class="mi">30</span><span class="n">th</span> <span class="n">ACM</span> <span class="n">SIGSPATIAL</span> <span class="n">International</span> <span class="n">Conference</span> <span class="n">on</span> <span class="n">Advances</span> <span class="ow">in</span> <span class="n">Geographic</span> <span class="n">Information</span> <span class="n">Systems</span>
+<span class="p">(</span><span class="n">ACM</span> <span class="n">SIGSPATIAL</span> <span class="mi">2022</span><span class="p">),</span> <span class="n">November</span> <span class="mi">1</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2022</span><span class="p">,</span> <span class="n">Seattle</span><span class="p">,</span> <span class="n">WA</span><span class="p">,</span> <span class="n">USA</span><span class="p">},</span>
+  <span class="n">year</span><span class="o">=</span><span class="p">{</span><span class="mi">2022</span><span class="p">},</span>
+  <span class="n">pages</span><span class="o">=</span><span class="p">{</span><span class="mi">1</span><span class="o">--</span><span class="mi">4</span><span class="p">},</span>
+  <span class="n">doi</span><span class="o">=</span><span class="p">{</span><span class="mf">10.1145</span><span class="o">/</span><span class="mf">3557915.3560974</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>Region2 uses the following packages with Python 3.7</p>
+<p>numpy==1.19.5</p>
+<p>pandas==0.24.1</p>
+<p>scikit_learn==1.1.2</p>
+<p>scipy==1.3.1</p>
+<p>torch==1.4.0</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>run train.py to generate the embeddings.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">train</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>run clustering.py to generate the clustering result.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">clustering</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">filename</span> <span class="n">your_filename</span>
+</pre></div>
+</div>
+<p>Here the ‘your_filename’ should be replaced with the generated file from step 1.</p>
+<ol class="arabic simple" start="3">
+<li><p>Alternatively, to generate the clustering for all the files, please use bash, and run bash run_clustering.py.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">run_clustering</span><span class="o">.</span><span class="n">sh</span> 
+</pre></div>
+</div>
+<p>Notes: the final results (e.g., metric values) may vary depends on different platforms and package versions.
+The current result is obtained using Ubuntu with all pacakge versions in requirements.txt.</p>
+</section>
+<section id="data">
+<h2>Data<a class="headerlink" href="#data" title="Link to this heading"></a></h2>
+<p>The data files used in our method are listed below with detailed descriptions.</p>
+<p>Flow_matrix.csv: The visitor flow matrix between Census Tracts in Wisconsin (The spatial flow interaction matrix).</p>
+<p>Spatial_matrix.csv: The adjacency matrix generated based on the geographic adjacency relationship.</p>
+<p>Spatial_matrix_rook.csv: The adjacency matrix generated based on the geographic adjacency relationship with the rook-type contiguity relationship.</p>
+<p>Spatial_distance_matrix.csv: the hop distance calculated based on the spatial adjacency matrix.</p>
+<p>flow_reID.csv: the visitor flows with updated IDs of Census Tracts.</p>
+<p>feature_matrix_f1.csv: the features of nodes (Census Tracts).</p>
+<p>feature_matrix_lwinc.csv: the low income population feature of nodes used for generating the homogeneous scores.</p>
+</section>
+<section id="acknowledgement">
+<h2>Acknowledgement<a class="headerlink" href="#acknowledgement" title="Link to this heading"></a></h2>
+<p>We acknowledge the funding support from the County Health Rankings and Roadmaps program of the University of Wisconsin Population Health Institute, Wisconsin Department of Health Services, and the National Science Foundation funded AI institute [Grant No. 2112606] for <a class="reference external" href="https://icicle.ai/">Intelligent Cyberinfrastructure with Computational Learning in the Environment (ICICLE)</a>. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the funders.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="PPOD_CA.html" class="btn btn-neutral float-left" title="PPOD_CA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Species-Classification-Multimodal-Context.html" class="btn btn-neutral float-right" title="Species Classification using Multimodal Heterogeneous Context" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, ICICLE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
